@@ -208,7 +208,7 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 
 </div>
 <script>
-const API_URL    = "https://script.google.com/macros/s/AKfycbzCxj90gMlVTlIvv9-kNQ1e0oHwfIwKersqycVVhxCH_pR3INXxl9-KdUYJEw27SQ30/exec";
+const API_URL    = "https://script.google.com/macros/library/d/1ynktEAatNkPW5exy1LE-j8MhvwK-A2wguCxtJXsg8FyzTbHQf-smiVKy/2";
 // BGG proxy options — tries each in order if previous fails
 const BGG_PROXIES = [
   "https://corsproxy.io/?",
@@ -452,23 +452,32 @@ document.getElementById('submit-btn').addEventListener('click',submitVote);
 async function init(){
   applyTexts();
   const params = new URLSearchParams(window.location.search);
-  const key = params.get('key');
+  const monthParam = params.get('m');
+  const keyParam   = params.get('key');
 
-  if(!key){ showStep('step-nokey'); applyTexts(); return; }
+  if(!monthParam && !keyParam){ showStep('step-nokey'); applyTexts(); return; }
 
   try{
-    const res = await fetch(API_URL+'?action=validateKey&key='+encodeURIComponent(key));
-    const data = await res.json();
+    let data;
+    if(monthParam){
+      // Short URL: look up the active key for this month
+      const res = await fetch(API_URL+'?action=getKeyByMonth&m='+encodeURIComponent(monthParam));
+      data = await res.json();
+    } else {
+      // Full key URL (fallback / admin use)
+      const res = await fetch(API_URL+'?action=validateKey&key='+encodeURIComponent(keyParam));
+      data = await res.json();
+      if(data.valid) data.key = keyParam;
+    }
 
     if(!data.valid){
       showStep(data.reason==='expired' ? 'step-closed' : 'step-nokey');
       applyTexts(); return;
     }
 
-    voteConfig = { ...data, key };
+    voteConfig = { ...data };
     document.getElementById('month-label').textContent = lang==='es' ? data.monthLabelEs : data.monthLabelEn;
 
-    // Check cookie (already voted)
     if(document.cookie.includes('voted_'+data.month)){
       showStep('step-success'); applyTexts(); return;
     }

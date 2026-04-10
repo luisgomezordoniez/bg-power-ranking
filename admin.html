@@ -173,11 +173,13 @@ h1 em { font-style:italic; color:var(--gold); }
       </div>
       <div id="gen-msg"></div>
       <div id="gen-result" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Voting link — share this with your community</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <code id="gen-url" style="font-size:12px;color:var(--gold);flex:1;word-break:break-all;font-family:monospace"></code>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Share this link</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <code id="gen-url" style="font-size:13px;color:var(--gold);flex:1;word-break:break-all;font-family:monospace;font-weight:500"></code>
           <button class="btn btn-outline" style="font-size:11px;padding:5px 12px;white-space:nowrap" onclick="copyUrl()">Copy</button>
         </div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Full key URL (admin reference)</div>
+        <code id="gen-url-full" style="font-size:11px;color:var(--text3);word-break:break-all;font-family:monospace;display:block"></code>
       </div>
       <div id="active-keys" style="margin-top:1rem"></div>
     </div>
@@ -213,7 +215,7 @@ h1 em { font-style:italic; color:var(--gold); }
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzCxj90gMlVTlIvv9-kNQ1e0oHwfIwKersqycVVhxCH_pR3INXxl9-KdUYJEw27SQ30/exec"; // Replace with your deployed Apps Script URL
+const API_URL = "https://script.google.com/macros/library/d/1ynktEAatNkPW5exy1LE-j8MhvwK-A2wguCxtJXsg8FyzTbHQf-smiVKy/2"; // Replace with your deployed Apps Script URL
 let adminPwd="", cityMerges={};
 
 async function api(body){
@@ -372,6 +374,9 @@ async function generateKey(){
   showMsg('gen-msg','Link generated successfully.','success');
   document.getElementById('gen-url').textContent=data.url;
   document.getElementById('gen-result').style.display='block';
+  // Also show full key URL for admin reference
+  const fullEl=document.getElementById('gen-url-full');
+  if(fullEl) fullEl.textContent=data.fullUrl||'';
   loadStatus();
 }
 
