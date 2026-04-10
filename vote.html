@@ -209,7 +209,11 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 </div>
 <script>
 const API_URL    = "https://script.google.com/macros/s/AKfycbzCxj90gMlVTlIvv9-kNQ1e0oHwfIwKersqycVVhxCH_pR3INXxl9-KdUYJEw27SQ30/exec";
-const BGG_PROXY  = "https://api.allorigins.win/raw?url=";
+// BGG proxy options — tries each in order if previous fails
+const BGG_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.allorigins.win/raw?url=",
+];
 const BGG_SEARCH = "https://boardgamegeek.com/xmlapi2/search?type=boardgame&query=";
 
 let lang = "es";
@@ -227,7 +231,7 @@ const T = {
     hot_title:"Novedades del mes", hot_desc:"Juegos nuevos que jugaste este mes. Ordénalos de mayor a menor emoción.",
     fav_title:"Favoritos eternos", fav_desc:"Juegos que siempre quieres volver a jugar, de cualquier época.",
     shame_title:"Nunca más", shame_desc:"Un juego que no quieres volver a ver en la mesa. Solo uno.",
-    placeholder:"Buscar en BGG...", searching:"Buscando...", no_results:"Sin resultados",
+    placeholder:"Buscar en BGG...", searching:"Buscando...", no_results:"Sin resultados", manual_entry:"Añadir manualmente",
     submit:"Enviar voto", submitting:"Enviando...",
     success_title:"¡Voto enviado!", success_desc:"Tu voto ha sido registrado. Los resultados se publicarán en unos días.", success_link:"Ver rankings →",
     already:"Ya has votado este mes desde este navegador.",
@@ -242,7 +246,7 @@ const T = {
     hot_title:"This month's hotness", hot_desc:"New games you played this month. Rank them by excitement.",
     fav_title:"Eternal favorites", fav_desc:"Games you always want to play again, from any era.",
     shame_title:"Never again", shame_desc:"One game you never want to see on the table again.",
-    placeholder:"Search BGG...", searching:"Searching...", no_results:"No results",
+    placeholder:"Search BGG...", searching:"Searching...", no_results:"No results", manual_entry:"Add manually",
     submit:"Submit vote", submitting:"Submitting...",
     success_title:"Vote submitted!", success_desc:"Your vote has been recorded. Results will be published in a few days.", success_link:"View rankings →",
     already:"You already voted this month from this browser.",
@@ -319,8 +323,23 @@ function makeAC(containerId,key){
     const items=dd.querySelectorAll('.dd-item');
     if(e.key==='ArrowDown'){ focusIdx=Math.min(focusIdx+1,items.length-1); hilite(items,focusIdx); e.preventDefault(); }
     if(e.key==='ArrowUp')  { focusIdx=Math.max(focusIdx-1,0); hilite(items,focusIdx); e.preventDefault(); }
-    if(e.key==='Enter'&&focusIdx>=0){ items[focusIdx].click(); e.preventDefault(); }
+    if(e.key==='Enter'){
+      if(focusIdx>=0){ items[focusIdx].click(); }
+      else if(!sel[key]&&input.value.trim().length>=2){
+        pick({id:null,name:input.value.trim(),year:''},input,dd,key);
+      }
+      dd.style.display='none'; e.preventDefault();
+    }
     if(e.key==='Escape') dd.style.display='none';
+  });
+  // Accept typed text as manual entry on blur if nothing selected
+  input.addEventListener('blur',()=>{
+    setTimeout(()=>{
+      dd.style.display='none';
+      if(!sel[key]&&input.value.trim().length>=2){
+        pick({id:null,name:input.value.trim(),year:''},input,dd,key);
+      }
+    },150);
   });
   document.addEventListener('click',e=>{ if(!wrap.contains(e.target)) dd.style.display='none'; });
 }
@@ -331,16 +350,30 @@ async function doSearch(q,dd,input,key){
   const ck=q.toLowerCase();
   if(cache[ck]){ renderDD(cache[ck],dd,input,key); return; }
   dd.innerHTML=`<div class="dd-loading">${t('searching')}</div>`; dd.style.display='block';
-  try{
-    const url=BGG_PROXY+encodeURIComponent(BGG_SEARCH+encodeURIComponent(q));
-    const xml=new DOMParser().parseFromString(await(await fetch(url)).text(),'text/xml');
-    const items=[...xml.querySelectorAll('item')].slice(0,8).map(it=>({
-      id:it.getAttribute('id'),
-      name:it.querySelector('name[type="primary"]')?.getAttribute('value')||it.querySelector('name')?.getAttribute('value')||'?',
-      year:it.querySelector('yearpublished')?.getAttribute('value')||''
-    }));
+  let items=null;
+  for(const proxy of BGG_PROXIES){
+    try{
+      const url=proxy+encodeURIComponent(BGG_SEARCH+encodeURIComponent(q));
+      const res=await fetch(url,{signal:AbortSignal.timeout(5000)});
+      const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+      items=[...xml.querySelectorAll('item')].slice(0,8).map(it=>({
+        id:it.getAttribute('id'),
+        name:it.querySelector('name[type="primary"]')?.getAttribute('value')||it.querySelector('name')?.getAttribute('value')||'?',
+        year:it.querySelector('yearpublished')?.getAttribute('value')||''
+      }));
+      if(items.length) break;
+    }catch(e){ continue; }
+  }
+  if(items&&items.length){
     cache[ck]=items; renderDD(items,dd,input,key);
-  }catch{ dd.innerHTML=`<div class="dd-loading">—</div>`; }
+  } else {
+    // BGG unreachable — show manual entry option
+    dd.innerHTML=`<div class="dd-item dd-manual"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+    dd.style.display='block';
+    dd.querySelector('.dd-manual').addEventListener('click',()=>{
+      pick({id:null,name:q,year:''},input,dd,key);
+    });
+  }
 }
 
 function renderDD(items,dd,input,key){
