@@ -27,7 +27,7 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 .lang button { font-size:11px; padding:4px 14px; border-radius:20px; border:1px solid var(--border2); background:transparent; color:var(--text2); font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.2s; }
 .lang button.active { background:var(--gold); color:var(--bg); border-color:var(--gold); font-weight:500; }
 
-.about-card { border:1px solid var(--border2); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; overflow:hidden; }
+.about-card { border:1px solid var(--border2); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; }
 .about-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),var(--gold2)); }
 .about-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:1.25rem; }
 .fields-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -45,9 +45,9 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 .bgg-hint { font-size:11px; color:var(--text3); margin-top:4px; }
 .bgg-hint a { color:var(--gold); text-decoration:none; }
 
-.section { border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; overflow:hidden; transition:border-color 0.2s; }
+.section { border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; transition:border-color 0.2s; }
 .section:hover { border-color:var(--border2); }
-.section::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0; transition:opacity 0.2s; }
+.section::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0; transition:opacity 0.2s; border-radius:12px 12px 0 0; }
 .section.hot::before { background:linear-gradient(90deg,var(--red),var(--gold)); }
 .section.fav::before { background:linear-gradient(90deg,var(--green),var(--gold2)); }
 .section.shame::before { background:linear-gradient(90deg,var(--text3),var(--red)); }
@@ -69,7 +69,7 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 .ac-input:focus { border-color:var(--gold); }
 .ac-input.has-value { border-color:rgba(58,122,80,0.6); background:rgba(58,122,80,0.06); }
 .ac-input::placeholder { color:var(--text3); }
-.dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg2); border:1px solid var(--border2); border-radius:8px; z-index:50; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
+.dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg2); border:1px solid var(--border2); border-radius:8px; z-index:999; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
 .dd-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s; display:flex; justify-content:space-between; align-items:center; }
 .dd-item:last-child { border-bottom:none; }
 .dd-item:hover,.dd-item.hi { background:var(--bg3); }
@@ -332,16 +332,21 @@ function makeAC(containerId,key){
     }
     if(e.key==='Escape') dd.style.display='none';
   });
-  // Accept typed text as manual entry on blur if nothing selected
-  input.addEventListener('blur',()=>{
-    setTimeout(()=>{
-      dd.style.display='none';
-      if(!sel[key]&&input.value.trim().length>=2){
-        pick({id:null,name:input.value.trim(),year:''},input,dd,key);
+  // Accept typed text on blur only if user clicks completely outside the autocomplete
+  let mousedownInsideDd = false;
+  dd.addEventListener('mousedown', () => { mousedownInsideDd = true; });
+  dd.addEventListener('mouseup',   () => { mousedownInsideDd = false; });
+
+  input.addEventListener('blur', () => {
+    if(mousedownInsideDd) return; // user is clicking a dropdown item, don't blur-commit
+    setTimeout(() => {
+      dd.style.display = 'none';
+      if(!sel[key] && input.value.trim().length >= 2){
+        pick({id:null, name:input.value.trim(), year:''}, input, dd, key);
       }
-    },150);
+    }, 200);
   });
-  document.addEventListener('click',e=>{ if(!wrap.contains(e.target)) dd.style.display='none'; });
+  document.addEventListener('click', e => { if(!wrap.contains(e.target)) dd.style.display='none'; });
 }
 
 function hilite(items,idx){ items.forEach((it,i)=>it.classList.toggle('hi',i===idx)); }
@@ -377,10 +382,19 @@ async function doSearch(q,dd,input,key){
 }
 
 function renderDD(items,dd,input,key){
-  if(!items.length){ dd.innerHTML=`<div class="dd-loading">${t('no_results')}</div>`; dd.style.display='block'; return; }
-  dd.innerHTML=items.map(it=>`<div class="dd-item"><span class="dd-name">${it.name}</span><span class="dd-year">${it.year||''}</span></div>`).join('');
+  const q=input.value.trim();
+  if(!items.length){
+    dd.innerHTML=`<div class="dd-item dd-manual"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+    dd.style.display='block';
+    dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
+    return;
+  }
+  // Always append a manual entry option at the bottom
+  const manualHtml=`<div class="dd-item dd-manual" style="border-top:1px solid var(--border)"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+  dd.innerHTML=items.map(it=>`<div class="dd-item"><span class="dd-name">${it.name}</span><span class="dd-year">${it.year||''}</span></div>`).join('')+manualHtml;
   dd.style.display='block';
-  dd.querySelectorAll('.dd-item').forEach((el,i)=>el.addEventListener('click',()=>pick(items[i],input,dd,key)));
+  dd.querySelectorAll('.dd-item:not(.dd-manual)').forEach((el,i)=>el.addEventListener('click',()=>pick(items[i],input,dd,key)));
+  dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
 }
 
 function pick(game,input,dd,key){
