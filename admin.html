@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Tabletop Power Rankings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0e0c; --bg2:#1a1915; --bg3:#232219;
+  --gold:#d4a843; --gold2:#f0c060; --red:#c04030; --green:#3a7a50;
+  --text:#e8e4d8; --text2:#9a9080; --text3:#5a5448;
+  --border:rgba(212,168,67,0.12); --border2:rgba(212,168,67,0.28);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; font-weight:300; }
+.page { max-width:860px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+
+.masthead { margin-bottom:2rem; }
+.eyebrow { font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; }
+h1 { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; }
+h1 em { font-style:italic; color:var(--gold); }
+
+/* Login */
+.login-card { background:var(--bg2); border:1px solid var(--border2); border-radius:12px; padding:2rem; max-width:360px; }
+.field { margin-bottom:1rem; }
+.field label { display:block; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text3); margin-bottom:6px; font-weight:500; }
+.field input, .field select { width:100%; padding:9px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:'Outfit',sans-serif; font-weight:300; color:var(--text); outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(--gold); }
+.field input::placeholder { color:var(--text3); }
+
+.btn { padding:10px 20px; border:none; border-radius:8px; font-size:13px; font-weight:500; font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s; letter-spacing:0.03em; }
+.btn-gold { background:var(--gold); color:var(--bg); }
+.btn-gold:hover { background:var(--gold2); }
+.btn-red { background:var(--red); color:var(--text); }
+.btn-red:hover { opacity:0.85; }
+.btn-green { background:var(--green); color:var(--text); }
+.btn-green:hover { opacity:0.85; }
+.btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+.msg { font-size:12px; padding:9px 14px; border-radius:8px; margin-top:0.75rem; }
+.msg.error { background:rgba(192,64,48,0.15); color:#e07060; border:1px solid rgba(192,64,48,0.25); }
+.msg.success { background:rgba(58,122,80,0.15); color:#6ab87a; border:1px solid rgba(58,122,80,0.25); }
+.msg.info { background:rgba(74,122,181,0.15); color:#7ab0e0; border:1px solid rgba(74,122,181,0.25); }
+.msg.warning { background:rgba(212,168,67,0.12); color:var(--gold); border:1px solid var(--border2); }
+
+.hidden { display:none; }
+
+/* Stats */
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:1.5rem; }
+.stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:1.25rem; }
+.stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+.stat-val { font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--text); line-height:1; }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:5px; }
+.status-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:5px 12px; border-radius:20px; font-weight:500; }
+.pill-open { background:rgba(58,122,80,0.15); color:#6ab87a; border:1px solid rgba(58,122,80,0.25); }
+.pill-closed { background:rgba(192,64,48,0.12); color:#e07060; border:1px solid rgba(192,64,48,0.2); }
+.dot { width:6px; height:6px; border-radius:50%; }
+.dot-open { background:var(--green); }
+.dot-closed { background:var(--red); }
+
+/* Sections */
+.section { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; }
+.section-title { font-size:14px; font-weight:500; color:var(--text); margin-bottom:1rem; display:flex; align-items:center; gap:10px; }
+.section-desc { font-size:12px; color:var(--text2); margin-bottom:1rem; line-height:1.6; }
+.actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* City normalizer */
+.city-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:1rem; }
+.city-table th { text-align:left; padding:7px 10px; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border2); font-weight:500; }
+.city-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.city-table tr:last-child td { border-bottom:none; }
+.city-table tr:hover td { background:var(--bg3); }
+.city-input-merge { padding:6px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:'Outfit',sans-serif; color:var(--text); outline:none; width:160px; }
+.city-input-merge:focus { border-color:var(--gold); }
+.merge-btn { padding:5px 12px; font-size:11px; background:transparent; border:1px solid var(--border2); border-radius:6px; color:var(--text2); cursor:pointer; font-family:'Outfit',sans-serif; transition:all 0.15s; }
+.merge-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* Votes table */
+.votes-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:1rem; }
+.votes-table th { text-align:left; padding:7px 10px; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border2); font-weight:500; }
+.votes-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+.votes-table tr:last-child td { border-bottom:none; }
+.votes-table tr:hover td { background:var(--bg3); }
+.tag { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; margin:1px; }
+.tag-hot { background:rgba(192,64,48,0.12); border-left:2px solid var(--red); color:var(--text2); }
+.tag-fav { background:rgba(58,122,80,0.12); border-left:2px solid var(--green); color:var(--text2); }
+.tag-shame { background:rgba(90,84,72,0.2); border-left:2px solid var(--text3); color:var(--text2); }
+.flag { color:#e07060; font-weight:500; }
+
+/* Preview */
+.preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem; }
+.preview-col h3 { font-size:10px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.75rem; }
+.preview-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.preview-item:last-child { border-bottom:none; }
+.preview-rank { font-size:10px; color:var(--text3); min-width:16px; }
+.preview-score { font-size:10px; color:var(--text3); margin-left:auto; }
+.preview-note { font-size:12px; color:var(--text2); line-height:1.6; }
+
+@media(max-width:600px){
+  .preview-grid { grid-template-columns:1fr; }
+  .stat-row { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">Tabletop Power Rankings</div>
+    <h1>Admin <em>Panel</em></h1>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login-section">
+    <div class="login-card">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="pwd-input" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <button class="btn btn-gold" onclick="login()">Login</button>
+      <div id="login-msg"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div id="stat-status"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current month</div>
+        <div class="stat-val" id="stat-month" style="font-size:1rem;padding-top:4px">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Votes this month</div>
+        <div class="stat-val" id="stat-votes">0</div>
+        <div class="stat-sub" id="stat-cities">0 cities</div>
+      </div>
+    </div>
+
+    <!-- Generate voting link -->
+    <div class="section">
+      <div class="section-title">Generate voting link</div>
+      <div class="section-desc">Creates a unique secret link for this month's voting. Share it with your community — it expires automatically on the end date.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+        <div class="field">
+          <label>Month ID</label>
+          <input type="text" id="gen-month" placeholder="march-2026">
+        </div>
+        <div class="field">
+          <label>Closes on (YYYY-MM-DD)</label>
+          <input type="text" id="gen-expiry" placeholder="2026-04-15">
+        </div>
+        <div class="field">
+          <label>Label ES</label>
+          <input type="text" id="gen-label-es" placeholder="Marzo 2026 · Cierra el 15 abr">
+        </div>
+        <div class="field">
+          <label>Label EN</label>
+          <input type="text" id="gen-label-en" placeholder="March 2026 · Closes Apr 15">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="generateKey()">Generate link</button>
+        <button class="btn btn-outline" onclick="prefillMarch()">Example: March 2026</button>
+      </div>
+      <div id="gen-msg"></div>
+      <div id="gen-result" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Voting link — share this with your community</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <code id="gen-url" style="font-size:12px;color:var(--gold);flex:1;word-break:break-all;font-family:monospace"></code>
+          <button class="btn btn-outline" style="font-size:11px;padding:5px 12px;white-space:nowrap" onclick="copyUrl()">Copy</button>
+        </div>
+      </div>
+      <div id="active-keys" style="margin-top:1rem"></div>
+    </div>
+
+    <!-- City normalizer -->
+    <div class="section">
+      <div class="section-title">City cleanup</div>
+      <div class="section-desc">Merge variant spellings before calculating. Edit the "Normalized" column and click Merge.</div>
+      <button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="loadVotes()">Refresh</button>
+      <div id="city-container"><p style="font-size:12px;color:var(--text3);margin-top:0.75rem">Click Refresh to load.</p></div>
+    </div>
+
+    <!-- Vote review -->
+    <div class="section">
+      <div class="section-title">Vote review</div>
+      <div class="section-desc">Check for suspicious entries before publishing. Flagged emails appear in red.</div>
+      <div id="votes-container"><p style="font-size:12px;color:var(--text3)">Click Refresh above to load.</p></div>
+    </div>
+
+    <!-- Calculate & Publish -->
+    <div class="section">
+      <div class="section-title">Calculate & Publish</div>
+      <div class="section-desc">Run after your review window. Preview before publishing live.</div>
+      <div class="actions" style="margin-bottom:1rem">
+        <button class="btn btn-gold" onclick="calculate()">Calculate rankings</button>
+        <button class="btn btn-green" id="publish-btn" disabled onclick="publish()">Publish to leaderboard</button>
+      </div>
+      <div id="calc-msg"></div>
+      <div id="preview-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_URL = "YOUR_APPS_SCRIPT_URL"; // Replace with your deployed Apps Script URL
+let adminPwd="", cityMerges={};
+
+async function api(body){
+  const res=await fetch(API_URL,{method:'POST',body:JSON.stringify(body)});
+  return res.json();
+}
+
+async function login(){
+  const pwd=document.getElementById('pwd-input').value;
+  const data=await api({action:'adminLogin',password:pwd});
+  if(data.success){
+    adminPwd=pwd;
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    loadStatus(); loadVotes();
+  }else{ showMsg('login-msg','Wrong password','error'); }
+}
+
+async function loadStatus(){
+  const [votes,status]=await Promise.all([
+    api({action:'getVotes',password:adminPwd}),
+    fetch(API_URL+'?action=status').then(r=>r.json())
+  ]);
+  document.getElementById('stat-month').textContent=status.currentMonth||'—';
+  document.getElementById('month-input').value=status.currentMonth||'';
+  const open=status.votingOpen;
+  document.getElementById('stat-status').innerHTML=`<div class="status-pill ${open?'pill-open':'pill-closed'}"><div class="dot ${open?'dot-open':'dot-closed'}"></div>${open?'Open':'Closed'}</div>`;
+  if(!votes.error){
+    document.getElementById('stat-votes').textContent=votes.total||0;
+    const cities=votes.votes?[...new Set(votes.votes.map(v=>v.city).filter(Boolean))].length:0;
+    document.getElementById('stat-cities').textContent=`${cities} cit${cities!==1?'ies':'y'}`;
+  }
+  if(status.activeKeys) renderActiveKeys(status.activeKeys);
+}
+
+
+
+async function loadVotes(){
+  const data=await api({action:'getVotes',password:adminPwd});
+  if(data.error){ showMsg('calc-msg',data.error,'error'); return; }
+  renderCityTable(data.votes||[]);
+  renderVotesTable(data.votes||[], data.total, data.month);
+  loadStatus();
+}
+
+function renderCityTable(votes){
+  const cityCount={};
+  votes.forEach(v=>{ if(v.city){ const c=v.city.trim(); cityCount[c]=(cityCount[c]||0)+1; } });
+  const cities=Object.entries(cityCount).sort((a,b)=>b[1]-a[1]);
+  if(!cities.length){ document.getElementById('city-container').innerHTML='<p style="font-size:12px;color:var(--text3);margin-top:0.75rem">No city data yet.</p>'; return; }
+  document.getElementById('city-container').innerHTML=`
+    <div style="overflow-x:auto">
+    <table class="city-table">
+      <thead><tr><th>Raw city</th><th>Votes</th><th>Normalize to</th><th></th></tr></thead>
+      <tbody>${cities.map(([city,count])=>`
+        <tr>
+          <td>${city}</td>
+          <td style="color:var(--text3)">${count}</td>
+          <td><input class="city-input-merge" value="${cityMerges[city]||city}" data-raw="${city}" placeholder="Canonical name"></td>
+          <td><button class="merge-btn" onclick="mergeCity('${city.replace(/'/g,"\\'")}')">Apply</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+function mergeCity(raw){
+  const inputs=document.querySelectorAll('.city-input-merge');
+  inputs.forEach(inp=>{ if(inp.dataset.raw===raw) cityMerges[raw]=inp.value.trim()||raw; });
+  showMsg('calc-msg','City merge saved. Will be applied on next Calculate.','info');
+}
+
+function renderVotesTable(votes,total,month){
+  if(!votes.length){ document.getElementById('votes-container').innerHTML='<p style="font-size:12px;color:var(--text3)">No votes yet.</p>'; return; }
+  const emailCount={};
+  votes.forEach(v=>{ emailCount[v.email]=(emailCount[v.email]||0)+1; });
+  document.getElementById('votes-container').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin:0.75rem 0">${total} votes · ${month}</div>
+    <div style="overflow-x:auto">
+    <table class="votes-table">
+      <thead><tr><th>#</th><th>Email</th><th>City</th><th>BGG</th><th>Hotness</th><th>Favorites</th><th>Shame</th></tr></thead>
+      <tbody>${votes.map((v,i)=>`
+        <tr>
+          <td style="color:var(--text3)">${i+1}</td>
+          <td class="${emailCount[v.email]>1?'flag':''}">${v.email}${emailCount[v.email]>1?' ⚠':''}</td>
+          <td>${v.city||'—'}</td>
+          <td style="color:var(--text3)">${v.bggUser||'—'}</td>
+          <td>${v.hot.filter(g=>g.name).map((g,j)=>`<span class="tag tag-hot">${j+1}. ${g.name}</span>`).join('')||'—'}</td>
+          <td>${v.fav.filter(g=>g.name).map((g,j)=>`<span class="tag tag-fav">${j+1}. ${g.name}</span>`).join('')||'—'}</td>
+          <td>${v.shame.name?`<span class="tag tag-shame">${v.shame.name}</span>`:'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+async function calculate(){
+  showMsg('calc-msg','Calculating...','info');
+  document.getElementById('preview-container').innerHTML='';
+  const data=await api({action:'calculate',password:adminPwd,cityMerges});
+  if(data.error){ showMsg('calc-msg',data.error,'error'); return; }
+  showMsg('calc-msg',`Rankings calculated for ${data.month} (${data.total} votes). Review below then publish.`,'success');
+  document.getElementById('publish-btn').disabled=false;
+  renderPreview(data);
+}
+
+function renderPreview(data){
+  const col=(title,items,color)=>`
+    <div class="preview-col">
+      <h3>${title}</h3>
+      ${(items||[]).map((it,i)=>`
+        <div class="preview-item">
+          <span class="preview-rank">${i+1}</span>
+          <span style="color:var(--text)">${it.name}</span>
+          <span class="preview-score" style="color:${color}">${it.score.toFixed(3)}</span>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('preview-container').innerHTML=`
+    <div style="margin-top:0.5rem;font-size:11px;color:var(--text3);margin-bottom:1rem">Preview — not yet published</div>
+    <div class="preview-grid">
+      ${col('Hotness',data.hotness,'#c04030')}
+      ${col('Favorites',data.favorites,'#3a7a50')}
+    </div>
+    <div class="preview-grid">
+      ${col('Shame (top 5)',data.shame,'#5a5448')}
+      <div class="preview-col">
+        <h3>Ready?</h3>
+        <p class="preview-note">Once published these rankings go live on the leaderboard. This cannot be undone.</p>
+      </div>
+    </div>`;
+}
+
+async function publish(){
+  if(!confirm('Publish these rankings to the public leaderboard?')) return;
+  showMsg('calc-msg','Publishing...','info');
+  const data=await api({action:'publish',password:adminPwd});
+  if(data.error){ showMsg('calc-msg',data.error,'error'); return; }
+  showMsg('calc-msg',`Rankings for ${data.published.month} are now live.`,'success');
+  document.getElementById('publish-btn').disabled=true;
+  document.getElementById('preview-container').innerHTML='';
+}
+
+function prefillMarch(){
+  document.getElementById('gen-month').value='march-2026';
+  document.getElementById('gen-expiry').value='2026-04-15';
+  document.getElementById('gen-label-es').value='Marzo 2026 · Cierra el 15 abr';
+  document.getElementById('gen-label-en').value='March 2026 · Closes Apr 15';
+}
+
+async function generateKey(){
+  const month=document.getElementById('gen-month').value.trim();
+  const expiry=document.getElementById('gen-expiry').value.trim();
+  const labelEs=document.getElementById('gen-label-es').value.trim();
+  const labelEn=document.getElementById('gen-label-en').value.trim();
+  if(!month||!expiry){showMsg('gen-msg','Month ID and expiry date are required','error');return;}
+  const data=await api({action:'generateKey',password:adminPwd,config:{month,expiryDate:expiry,monthLabelEs:labelEs||month,monthLabelEn:labelEn||month}});
+  if(data.error){showMsg('gen-msg',data.error,'error');return;}
+  showMsg('gen-msg','Link generated successfully.','success');
+  document.getElementById('gen-url').textContent=data.url;
+  document.getElementById('gen-result').style.display='block';
+  loadStatus();
+}
+
+function copyUrl(){
+  const url=document.getElementById('gen-url').textContent;
+  navigator.clipboard.writeText(url).then(()=>showMsg('gen-msg','Copied to clipboard!','info'));
+}
+
+function renderActiveKeys(keys){
+  if(!keys||!keys.length){document.getElementById('active-keys').innerHTML='';return;}
+  document.getElementById('active-keys').innerHTML=`
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Active voting links</div>
+    ${keys.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--text)">${k.monthLabelEs||k.month}</span>
+      <span style="color:var(--text3);margin-left:auto">expires ${k.expiryDate}</span>
+      <button class="btn btn-outline" style="font-size:11px;padding:4px 10px" onclick="revokeKey('${k.month}')">Revoke</button>
+    </div>`).join('')}`;
+}
+
+async function revokeKey(month){
+  if(!confirm('Revoke voting link for '+month+'?')) return;
+  // We need the actual key — for now show a message asking to revoke from the sheet directly
+  showMsg('gen-msg','To revoke: open the VoteKeys sheet in Google Sheets and change the Status to "revoked".','info');
+}
+
+function showMsg(id,text,type){
+  document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
+}
+</script>
+</body>
+</html>

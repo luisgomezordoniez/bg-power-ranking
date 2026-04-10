@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabletop Power Rankings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0e0c; --bg2:#1a1915; --bg3:#232219;
+  --gold:#d4a843; --gold2:#f0c060; --red:#c04030; --green:#3a7a50;
+  --text:#e8e4d8; --text2:#9a9080; --text3:#5a5448;
+  --border:rgba(212,168,67,0.12); --border2:rgba(212,168,67,0.28);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; font-weight:300; }
+
+nav { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
+.nav-logo { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
+.nav-logo em { font-style:italic; color:var(--gold); }
+.nav-right { display:flex; align-items:center; gap:1.25rem; }
+.nav-link { font-size:12px; color:var(--text2); text-decoration:none; letter-spacing:0.04em; transition:color 0.15s; }
+.nav-link:hover { color:var(--text); }
+.lang { display:flex; gap:4px; }
+.lang button { font-size:11px; padding:3px 10px; border-radius:20px; border:1px solid var(--border2); background:transparent; color:var(--text2); font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.15s; }
+.lang button.active { background:var(--gold); color:var(--bg); border-color:var(--gold); }
+
+.hero { padding:2.5rem 1.5rem 1.5rem; max-width:860px; margin:0 auto; }
+.hero-eyebrow { font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; }
+.hero-title { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3rem); font-weight:700; line-height:1.05; }
+.hero-title em { font-style:italic; font-weight:400; color:var(--gold); }
+.hero-meta { display:flex; align-items:center; gap:10px; margin-top:1rem; flex-wrap:wrap; }
+.month-nav { display:flex; align-items:center; gap:6px; }
+.mnav-btn { background:none; border:1px solid var(--border2); border-radius:20px; color:var(--text2); font-size:12px; width:26px; height:26px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.mnav-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+.mnav-btn:disabled { opacity:0.2; cursor:default; }
+.month-chip { font-size:12px; color:var(--text2); border:1px solid var(--border2); padding:4px 14px; border-radius:20px; }
+.voter-chip { font-size:12px; color:var(--text3); }
+
+.city-filter { display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.city-filter label { font-size:11px; color:var(--text3); letter-spacing:0.06em; text-transform:uppercase; }
+.city-select { font-size:12px; padding:4px 10px; background:var(--bg2); border:1px solid var(--border2); border-radius:20px; color:var(--text2); font-family:'Outfit',sans-serif; outline:none; cursor:pointer; }
+.city-select:focus { border-color:var(--gold); }
+
+.content { max-width:860px; margin:0 auto; padding:1.5rem 1.5rem 4rem; }
+.tabs { display:flex; gap:0; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+.tab { padding:9px 20px; font-size:13px; cursor:pointer; background:none; border:none; color:var(--text3); font-family:'Outfit',sans-serif; font-weight:300; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.15s; letter-spacing:0.02em; }
+.tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.tab:hover:not(.active) { color:var(--text2); }
+
+.panel { display:none; }
+.panel.active { display:block; animation:fadeIn 0.25s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+.ranking { display:flex; flex-direction:column; gap:4px; }
+.rrow { display:grid; grid-template-columns:42px 1fr 110px 48px; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:8px; overflow:hidden; transition:border-color 0.15s; }
+.rrow:hover { border-color:var(--border2); }
+.rrow.r1 { border-color:rgba(212,168,67,0.35); }
+.rnum { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--text3); text-align:center; padding:14px 0; }
+.rrow.r1 .rnum { color:var(--gold); }
+.rrow.r2 .rnum,.rrow.r3 .rnum { color:var(--text2); }
+.rinfo { padding:12px 14px; }
+.rname { font-size:14px; font-weight:400; color:var(--text); }
+.rid { font-size:10px; color:var(--text3); margin-top:2px; }
+.rscore { padding:12px 14px 12px 0; }
+.sbar-wrap { display:flex; align-items:center; gap:8px; }
+.sbar { height:2px; flex:1; background:var(--bg3); border-radius:1px; }
+.sbar-fill { height:100%; border-radius:1px; }
+.sval { font-size:11px; color:var(--text3); min-width:32px; text-align:right; }
+.rmove { text-align:center; font-size:11px; font-weight:500; padding:12px 10px; }
+.up { color:var(--green); }
+.dn { color:var(--red); }
+.nw { color:#4a7ab5; font-size:9px; letter-spacing:0.06em; text-transform:uppercase; }
+.sm { color:var(--text3); }
+
+.hall { display:flex; flex-direction:column; gap:4px; }
+.hrow { display:flex; align-items:center; gap:14px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:13px 16px; transition:border-color 0.15s; }
+.hrow:hover { border-color:var(--border2); }
+.hrank { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--text3); min-width:28px; text-align:center; }
+.hname { font-size:14px; flex:1; color:var(--text); }
+.hmonths { font-size:11px; color:var(--text3); white-space:nowrap; }
+.hbadge { font-size:9px; padding:3px 8px; border-radius:10px; background:rgba(192,64,48,0.12); color:#e07060; letter-spacing:0.06em; text-transform:uppercase; border:1px solid rgba(192,64,48,0.25); }
+
+.empty { padding:3rem 0; text-align:center; font-size:13px; color:var(--text3); }
+.loading { padding:3rem 0; text-align:center; font-size:13px; color:var(--text3); }
+
+.min-voters-note { font-size:11px; color:var(--text3); margin-top:0.75rem; font-style:italic; }
+
+@media(max-width:600px){
+  nav { padding:0.875rem 1rem; }
+  .hero { padding:1.75rem 1rem 1rem; }
+  .content { padding:1rem 1rem 3rem; }
+  .rrow { grid-template-columns:34px 1fr 80px 40px; }
+  .rnum { font-size:1rem; }
+  .rname { font-size:13px; }
+  .tab { padding:8px 12px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Tabletop <em>Power Rankings</em></div>
+  <div class="nav-right">
+    <a href="vote-june-2026.html" class="nav-link" id="nav-vote">Votar</a>
+    <div class="lang">
+      <button class="active" onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow" id="eyebrow">Rankings mensuales</div>
+  <h1 class="hero-title" id="hero-h">Rankings de<br><em>mesa del mes</em></h1>
+  <div class="hero-meta">
+    <div class="month-nav">
+      <button class="mnav-btn" id="prev-btn" onclick="prevMonth()">←</button>
+      <div class="month-chip" id="month-chip">—</div>
+      <button class="mnav-btn" id="next-btn" onclick="nextMonth()">→</button>
+    </div>
+    <div class="voter-chip" id="voter-chip"></div>
+  </div>
+  <div class="city-filter">
+    <label id="city-filter-label">Ciudad</label>
+    <select class="city-select" id="city-select" onchange="renderAll()">
+      <option value="global" id="opt-global">Global</option>
+    </select>
+  </div>
+</div>
+
+<div class="content">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)" id="tab0">Novedades</button>
+    <button class="tab" onclick="switchTab(1)" id="tab1">Favoritos</button>
+    <button class="tab" onclick="switchTab(2)" id="tab2">Vergüenza</button>
+    <button class="tab" onclick="switchTab(3)" id="tab3">Hall of Shame</button>
+  </div>
+  <div class="panel active" id="panel0"></div>
+  <div class="panel" id="panel1"></div>
+  <div class="panel" id="panel2"></div>
+  <div class="panel" id="panel3"></div>
+</div>
+
+<script>
+const API_URL = "YOUR_APPS_SCRIPT_URL"; // Replace with your deployed Apps Script URL
+const MIN_CITY_VOTERS = 10;
+
+let lang="es", monthIdx=0, allMonths=[];
+
+const T={
+  es:{
+    eyebrow:"Rankings mensuales", nav_vote:"Votar",
+    hero:["Rankings de","mesa del mes"],
+    tabs:["Novedades","Favoritos","Vergüenza","Hall of Shame"],
+    voters:n=>`${n} votante${n!==1?'s':''}`,
+    move_new:"nuevo",
+    hall_empty:"El Hall of Shame está vacío... por ahora.",
+    hall_months:n=>`${n} meses`,
+    empty:"Sin datos publicados todavía.",
+    loading:"Cargando rankings...",
+    city_filter:"Ciudad",
+    opt_global:"Global",
+    min_voters:`Mínimo ${MIN_CITY_VOTERS} votos para mostrar rankings por ciudad.`,
+  },
+  en:{
+    eyebrow:"Monthly rankings", nav_vote:"Vote",
+    hero:["Monthly tabletop","power rankings"],
+    tabs:["Hotness","Favorites","Shame","Hall of Shame"],
+    voters:n=>`${n} voter${n!==1?'s':''}`,
+    move_new:"new",
+    hall_empty:"The Hall of Shame is empty... for now.",
+    hall_months:n=>`${n} months`,
+    empty:"No published data yet.",
+    loading:"Loading rankings...",
+    city_filter:"City",
+    opt_global:"Global",
+    min_voters:`A minimum of ${MIN_CITY_VOTERS} votes is required to show city rankings.`,
+  }
+};
+
+function tr(k,...a){ const v=T[lang][k]; return typeof v==='function'?v(...a):v; }
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang button').forEach((b,i)=>b.classList.toggle('active',(i===0&&l==='es')||(i===1&&l==='en')));
+  updateStaticTexts();
+  if(allMonths.length) renderAll();
+}
+
+function updateStaticTexts(){
+  const h=tr('hero');
+  document.getElementById('hero-h').innerHTML=h[0]+'<br><em>'+h[1]+'</em>';
+  document.getElementById('eyebrow').textContent=tr('eyebrow');
+  document.getElementById('nav-vote').textContent=tr('nav_vote');
+  document.getElementById('city-filter-label').textContent=tr('city_filter');
+  document.getElementById('opt-global').textContent=tr('opt_global');
+  tr('tabs').forEach((t,i)=>document.getElementById('tab'+i).textContent=t);
+}
+
+function prevMonth(){ if(monthIdx>0){ monthIdx--; renderAll(); } }
+function nextMonth(){ if(monthIdx<allMonths.length-1){ monthIdx++; renderAll(); } }
+
+function switchTab(idx){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+}
+
+function getFilteredData(monthData){
+  const city=document.getElementById('city-select').value;
+  if(city==='global') return monthData;
+  const cd=monthData.byCity&&monthData.byCity[city];
+  if(!cd||cd.total<MIN_CITY_VOTERS) return null;
+  return cd;
+}
+
+function populateCitySelect(monthData){
+  const sel=document.getElementById('city-select');
+  const cur=sel.value;
+  // Keep only global option, then add cities from this month
+  while(sel.options.length>1) sel.remove(1);
+  if(monthData.byCity){
+    Object.entries(monthData.byCity)
+      .filter(([_,d])=>d.total>=MIN_CITY_VOTERS)
+      .sort((a,b)=>b[1].total-a[1].total)
+      .forEach(([city])=>{
+        const opt=document.createElement('option');
+        opt.value=city; opt.textContent=city;
+        sel.appendChild(opt);
+      });
+  }
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  else sel.value='global';
+}
+
+function moveHtml(m){
+  if(!m||m==='new') return `<span class="nw">${tr('move_new')}</span>`;
+  if(m==='0') return `<span class="sm">—</span>`;
+  const n=parseInt(m);
+  if(n>0) return `<span class="up">+${n}</span>`;
+  if(n<0) return `<span class="dn">${n}</span>`;
+  return `<span class="sm">—</span>`;
+}
+
+function renderRanking(items,color){
+  if(!items||!items.length) return `<div class="empty">${tr('empty')}</div>`;
+  const max=items[0].score;
+  return `<div class="ranking">${items.map((it,i)=>{
+    const r=i+1,pct=Math.round(it.score/max*100);
+    return `<div class="rrow${r<=3?' r'+r:''}">
+      <div class="rnum">${r}</div>
+      <div class="rinfo"><div class="rname">${it.name}</div>${it.id?`<div class="rid">BGG #${it.id}</div>`:''}</div>
+      <div class="rscore"><div class="sbar-wrap"><div class="sbar"><div class="sbar-fill" style="width:${pct}%;background:${color}"></div></div><div class="sval">${it.score.toFixed(2)}</div></div></div>
+      <div class="rmove">${moveHtml(it.move)}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderHall(hall){
+  if(!hall||!hall.length) return `<div class="empty">${tr('hall_empty')}</div>`;
+  const nums=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+  return `<div class="hall">${hall.map((it,i)=>`
+    <div class="hrow">
+      <div class="hrank">${nums[i]||i+1}</div>
+      <div class="hname">${it.name}</div>
+      <div class="hmonths">${tr('hall_months',it.totalMonths)}</div>
+      <div class="hbadge">inducted</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderAll(){
+  const d=allMonths[monthIdx];
+  document.getElementById('month-chip').textContent=d.month;
+  document.getElementById('prev-btn').disabled=monthIdx===0;
+  document.getElementById('next-btn').disabled=monthIdx===allMonths.length-1;
+  populateCitySelect(d);
+  const fd=getFilteredData(d);
+  if(!fd){
+    const note=`<div class="empty">${tr('empty')}</div><div class="min-voters-note">${tr('min_voters')}</div>`;
+    [0,1,2].forEach(i=>document.getElementById('panel'+i).innerHTML=note);
+    document.getElementById('panel3').innerHTML=renderHall(d.hall);
+    document.getElementById('voter-chip').textContent='';
+    return;
+  }
+  document.getElementById('voter-chip').textContent=tr('voters',fd.total);
+  document.getElementById('panel0').innerHTML=renderRanking(fd.hotness,'#c04030');
+  document.getElementById('panel1').innerHTML=renderRanking(fd.favorites,'#3a7a50');
+  document.getElementById('panel2').innerHTML=renderRanking(fd.shame,'#5a5448');
+  document.getElementById('panel3').innerHTML=renderHall(d.hall);
+}
+
+async function init(){
+  updateStaticTexts();
+  document.getElementById('panel0').innerHTML=`<div class="loading">${tr('loading')}</div>`;
+  try{
+    const res=await fetch(API_URL+'?action=published');
+    const data=await res.json();
+    allMonths=(data.months||[]).reverse();
+    if(!allMonths.length){
+      document.getElementById('panel0').innerHTML=`<div class="empty">${tr('empty')}</div>`;
+      return;
+    }
+    monthIdx=0;
+    renderAll();
+  }catch(e){
+    document.getElementById('panel0').innerHTML=`<div class="empty">${tr('empty')}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
