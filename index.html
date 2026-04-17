@@ -102,6 +102,9 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
   .rname { font-size:13px; }
   .tab { padding:8px 12px; font-size:12px; }
 }
+.bgg-footer { text-align:center; padding:2rem 0 1.5rem; opacity:0.6; transition:opacity 0.2s; }
+.bgg-footer:hover { opacity:1; }
+.bgg-footer img { max-width:120px; display:inline-block; }
 </style>
   <script src="config.js"></script>
 </head>
@@ -347,5 +350,10 @@ async function init(){
 
 init();
 </script>
+<div class="bgg-footer">
+  <a href="https://boardgamegeek.com" target="_blank" rel="noopener">
+    <img src="bgg-logo.png" alt="Powered by BoardGameGeek">
+  </a>
+</div>
 </body>
 </html>
