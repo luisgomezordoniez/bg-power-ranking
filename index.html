@@ -54,13 +54,16 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
 
 .ranking { display:flex; flex-direction:column; gap:4px; }
-.rrow { display:grid; grid-template-columns:42px 1fr 110px 48px; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:8px; overflow:hidden; transition:border-color 0.15s; }
+.rrow { display:grid; grid-template-columns:42px 1fr 110px 48px; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:8px; transition:border-color 0.15s; }
 .rrow:hover { border-color:var(--border2); }
 .rrow.r1 { border-color:rgba(212,168,67,0.35); }
 .rnum { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--text3); text-align:center; padding:14px 0; }
 .rrow.r1 .rnum { color:var(--gold); }
 .rrow.r2 .rnum,.rrow.r3 .rnum { color:var(--text2); }
-.rinfo { padding:12px 14px; }
+.rinfo { padding:12px 14px; display:flex; align-items:center; gap:10px; }
+.rthumb { width:40px; height:40px; border-radius:6px; object-fit:cover; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; }
+.rthumb-placeholder { width:40px; height:40px; border-radius:6px; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; }
+.rinfo-text { flex:1; min-width:0; }
 .rname { font-size:14px; font-weight:400; color:var(--text); }
 .bgg-link { font-size:10px; color:var(--gold); text-decoration:none; opacity:0.7; margin-top:2px; display:inline-block; }
 .bgg-link:hover { opacity:1; }
@@ -94,6 +97,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
   .hero { padding:1.75rem 1rem 1rem; }
   .content { padding:1rem 1rem 3rem; }
   .rrow { grid-template-columns:34px 1fr 80px 40px; }
+  .rthumb, .rthumb-placeholder { width:32px; height:32px; }
   .rnum { font-size:1rem; }
   .rname { font-size:13px; }
   .tab { padding:8px 12px; font-size:12px; }
@@ -149,7 +153,12 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 <script>
 const MIN_CITY_VOTERS = 3;
 
-let lang="es", monthIdx=0, allMonths=[];
+let lang="es", monthIdx=0, allMonths=[], gamesCache=[];
+
+async function loadGamesCache(){
+  try{ const res=await fetch('games-cache.json'); gamesCache=await res.json(); }
+  catch(e){ gamesCache=[]; }
+}
 
 const T={
   es:{
@@ -245,18 +254,30 @@ function moveHtml(m){
   return `<span class="sm">—</span>`;
 }
 
+function getThumb(id){
+  if(!id) return '';
+  const g = gamesCache.find(g=>g.id===String(id));
+  return g&&g.thumb ? g.thumb : '';
+}
+
 function renderRanking(items,color){
   if(!items||!items.length) return `<div class="empty">${tr('empty')}</div>`;
   const max=items[0].score;
   return `<div class="ranking">${items.map((it,i)=>{
     const r=i+1,pct=Math.round(it.score/max*100);
+    const thumb=getThumb(it.id);
+    const thumbHtml=thumb
+      ? `<img class="rthumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
+      : `<div class="rthumb-placeholder"></div>`;
+    const bggHref=it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`;
     return `<div class="rrow${r<=3?' r'+r:''}">
       <div class="rnum">${r}</div>
       <div class="rinfo">
-        <div class="rname">${it.name}</div>
-        <a class="bgg-link" href="${it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`}" target="_blank" rel="noopener">
-          ${it.id ? `BGG #${it.id}` : `Buscar en BGG`}
-        </a>
+        ${thumbHtml}
+        <div class="rinfo-text">
+          <div class="rname">${it.name}</div>
+          <a class="bgg-link" href="${bggHref}" target="_blank" rel="noopener">BGG</a>
+        </div>
       </div>
       <div class="rscore"><div class="sbar-wrap"><div class="sbar"><div class="sbar-fill" style="width:${pct}%;background:${color}"></div></div><div class="sval">${it.score.toFixed(2)}</div></div></div>
       <div class="rmove">${moveHtml(it.move)}</div>
@@ -267,18 +288,21 @@ function renderRanking(items,color){
 function renderHall(hall){
   if(!hall||!hall.length) return `<div class="empty">${tr('hall_empty')}</div>`;
   const nums=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
-  return `<div class="hall">${hall.map((it,i)=>`
-    <div class="hrow">
+  return `<div class="hall">${hall.map((it,i)=>{
+    const thumb=getThumb(it.id);
+    const thumbHtml=thumb ? `<img class="rthumb" src="${thumb}" alt="" onerror="this.style.display='none'">` : `<div class="rthumb-placeholder"></div>`;
+    const bggHref=it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`;
+    return `<div class="hrow">
       <div class="hrank">${nums[i]||i+1}</div>
+      ${thumbHtml}
       <div>
         <div class="hname">${it.name}</div>
-        <a class="bgg-link" href="${it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`}" target="_blank" rel="noopener">
-          ${it.id ? `BGG #${it.id}` : `Buscar en BGG`}
-        </a>
+        <a class="bgg-link" href="${bggHref}" target="_blank" rel="noopener">BGG</a>
       </div>
       <div class="hmonths">${tr('hall_months',it.totalMonths)}</div>
       <div class="hbadge">inducted</div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function renderAll(){
@@ -304,6 +328,7 @@ function renderAll(){
 
 async function init(){
   updateStaticTexts();
+  loadGamesCache();
   document.getElementById('panel0').innerHTML=`<div class="loading">${tr('loading')}</div>`;
   try{
     const res=await fetch(API_URL+'?action=published');

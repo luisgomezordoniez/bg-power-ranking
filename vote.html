@@ -376,8 +376,13 @@ async function loadPlays(){
   txt.textContent = lang==='es' ? 'Cargando...' : 'Loading...';
   panel.style.display = 'none';
 
+  // In test mode use current month; otherwise use vote month
+  const playMonth = (voteConfig.month === 'test-mode')
+    ? new Date().toISOString().slice(0,7).replace('-','')  // e.g. 202604
+    : voteConfig.month;
+
   try {
-    const res = await fetch(API_URL+'?action=getPlays&username='+encodeURIComponent(username)+'&month='+encodeURIComponent(voteConfig.month));
+    const res = await fetch(API_URL+'?action=getPlays&username='+encodeURIComponent(username)+'&month='+encodeURIComponent(playMonth));
     const data = await res.json();
 
     if(data.error){
@@ -407,6 +412,21 @@ function renderPlaysPanel(plays){
   const header = lang==='es'
     ? 'Partidas registradas este mes en BGG'
     : 'Your logged plays this month on BGG';
+
+  // Add played games to session cache so autocomplete finds them instantly
+  const newGames = [];
+  plays.forEach(p => {
+    if(p.id && p.name && !gamesCache.find(g => g.id === p.id)){
+      gamesCache.push({ id: p.id, name: p.name, year: '', thumb: '' });
+      fetchThumb(p.id, null); // fetch thumbnail in background
+      newGames.push({ id: p.id, name: p.name, year: '', thumb: '' });
+    }
+  });
+  // Persist new games to GamesCatalog sheet silently
+  if(newGames.length){
+    fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addGames', games: newGames }) })
+      .catch(()=>{}); // silent fail
+  }
 
   const rows = plays.map(p => {
     const countTxt = p.plays === 1
@@ -567,31 +587,35 @@ function clearPick(key){
 
 const thumbCache={};
 async function fetchThumb(bggId, key){
-  // Check cache first
+  if(!bggId) return;
+  // If already in thumbCache, apply immediately if we have a key
   if(thumbCache[bggId]){
-    setThumb(key, thumbCache[bggId]); return;
+    if(key) setThumb(key, thumbCache[bggId]);
+    return;
   }
   try{
-    // Use BGG thumbnail from cache file if available
+    // Check games cache file first
     const cached=gamesCache.find(g=>g.id===bggId);
     if(cached&&cached.thumb){
       thumbCache[bggId]=cached.thumb;
-      setThumb(key, cached.thumb); return;
+      if(key) setThumb(key, cached.thumb);
+      return;
     }
-    // Fetch from BGG via proxy
-    const proxy='https://corsproxy.io/?';
-    const url=proxy+encodeURIComponent(`https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&type=boardgame`);
-    const res=await fetch(url,{signal:AbortSignal.timeout(6000)});
-    const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
-    const thumb=xml.querySelector('thumbnail')?.textContent?.trim();
+    // Fetch via Apps Script proxy (uses BGG token server-side)
+    const res=await fetch(API_URL+'?action=getThumb&id='+encodeURIComponent(bggId),
+      {signal:AbortSignal.timeout(8000)});
+    const data=await res.json();
+    const thumb=data.thumb||'';
     if(thumb){
       thumbCache[bggId]=thumb;
-      setThumb(key, thumb);
-      // Also store in games cache for this session
+      // Always store in gamesCache so next pick() uses it immediately
       const entry=gamesCache.find(g=>g.id===bggId);
       if(entry) entry.thumb=thumb;
+      else gamesCache.push({id:bggId, name:'', year:'', thumb});
+      // Apply to slot if one is active
+      if(key) setThumb(key, thumb);
     }
-  }catch(e){ /* silent fail — placeholder stays */ }
+  }catch(e){ /* silent fail */ }
 }
 
 function setThumb(key, url){
@@ -659,6 +683,29 @@ async function init(){
   const params = new URLSearchParams(window.location.search);
   const monthParam = params.get('m');
   const keyParam   = params.get('key');
+  const testMode   = params.get('test') === '1';
+
+  // ── TEST MODE — bypasses key validation, no data written ──
+  if(testMode){
+    voteConfig = {
+      month:        'test-mode',
+      monthLabelEs: 'Modo test · No se registran votos',
+      monthLabelEn: 'Test mode · No votes recorded',
+      expiryDate:   '2099-12-31',
+      key:          'test'
+    };
+    document.getElementById('month-label').textContent =
+      lang==='es' ? voteConfig.monthLabelEs : voteConfig.monthLabelEn;
+    showStep('step-vote');
+    ['hot1','hot2','hot3','fav1','fav2','fav3','shame1'].forEach(k=>makeAC(k,k));
+    applyTexts();
+    // Override submit to show success without hitting API
+    document.getElementById('submit-btn').addEventListener('click', ()=>{
+      showStep('step-success'); applyTexts();
+    }, { once: true });
+    return;
+  }
+  // ── END TEST MODE ──
 
   if(!monthParam && !keyParam){ showStep('step-nokey'); applyTexts(); return; }
 
