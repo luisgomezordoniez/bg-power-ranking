@@ -3,573 +3,696 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Votar / Vote — Tabletop Power Rankings</title>
+<title>Tu voto del mes — Tabletop Power Rankings</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #1a1812;
-    --ink2: #5a5650;
-    --ink3: #9a9590;
-    --paper: #f5f2ec;
-    --paper2: #edeae2;
-    --accent: #c84b2f;
-    --accent2: #e8a020;
-    --green: #2a7a4a;
-    --border: rgba(26,24,18,0.12);
-    --r: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--paper); color: var(--ink); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  
-  .page { max-width: 560px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+:root {
+  --bg:#0f0e0c; --bg2:#1a1915; --bg3:#232219;
+  --gold:#d4a843; --gold2:#f0c060; --red:#c04030; --green:#3a7a50;
+  --text:#e8e4d8; --text2:#9a9080; --text3:#5a5448;
+  --border:rgba(212,168,67,0.12); --border2:rgba(212,168,67,0.28);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; font-weight:300; }
+.page { max-width:540px; margin:0 auto; padding:2rem 1.25rem 4rem; }
 
-  .masthead { text-align: center; margin-bottom: 2.5rem; }
-  .masthead h1 { font-family: 'DM Serif Display', serif; font-size: 2rem; line-height: 1.1; color: var(--ink); }
-  .masthead h1 em { font-style: italic; color: var(--accent); }
-  .masthead .sub { font-size: 13px; color: var(--ink3); margin-top: 6px; }
-  .lang-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 2rem; }
-  .lang-btn { font-size: 12px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; background: transparent; color: var(--ink2); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
-  .lang-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.masthead { text-align:center; padding:2rem 0 2rem; }
+.eyebrow { font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); margin-bottom:0.75rem; }
+.masthead h1 { font-family:'Playfair Display',serif; font-size:2.4rem; font-weight:700; line-height:1.05; }
+.masthead h1 em { font-style:italic; font-weight:400; color:var(--gold); }
+.month-chip { display:inline-block; font-size:12px; color:var(--text2); border:1px solid var(--border2); padding:4px 16px; border-radius:20px; margin-top:0.75rem; }
 
-  /* Steps */
-  .step { display: none; }
-  .step.active { display: block; }
+.lang { display:flex; justify-content:center; gap:6px; margin-bottom:2rem; }
+.lang button { font-size:11px; padding:4px 14px; border-radius:20px; border:1px solid var(--border2); background:transparent; color:var(--text2); font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.2s; }
+.lang button.active { background:var(--gold); color:var(--bg); border-color:var(--gold); font-weight:500; }
 
-  /* Email step */
-  .email-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 2rem; }
-  .email-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 0.5rem; }
-  .email-card p { font-size: 14px; color: var(--ink2); line-height: 1.6; margin-bottom: 1.5rem; }
-  .field { margin-bottom: 1rem; }
-  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--ink2); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .field input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--r); font-size: 15px; font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); outline: none; transition: border 0.15s; }
-  .field input:focus { border-color: var(--ink); background: #fff; }
-  .btn { width: 100%; padding: 12px; background: var(--ink); color: var(--paper); border: none; border-radius: var(--r); font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.15s; }
-  .btn:hover { opacity: 0.85; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--border); }
-  .msg { font-size: 13px; margin-top: 0.75rem; padding: 10px 14px; border-radius: var(--r); }
-  .msg.error { background: #fdecea; color: #b71c1c; }
-  .msg.success { background: #e8f5e9; color: #1b5e20; }
-  .msg.info { background: #e3f2fd; color: #0d47a1; }
+.about-card { border:1px solid var(--border2); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; }
+.about-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),var(--gold2)); }
+.about-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:1.25rem; }
+.fields-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text3); font-weight:500; display:flex; align-items:center; gap:6px; }
+.required-dot { width:5px; height:5px; border-radius:50%; background:var(--gold); display:inline-block; flex-shrink:0; }
+.optional-tag { font-size:9px; color:var(--text3); letter-spacing:0.06em; }
+.field input { padding:9px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:'Outfit',sans-serif; font-weight:300; color:var(--text); outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(--gold); }
+.field input::placeholder { color:var(--text3); }
+.field input.filled { border-color:rgba(212,168,67,0.4); }
+.field input.error { border-color:var(--red); }
+.error-msg { font-size:11px; color:var(--red); margin-top:3px; display:none; }
+.error-msg.show { display:block; }
+.bgg-hint { font-size:11px; color:var(--text3); margin-top:4px; }
+.bgg-hint a { color:var(--gold); text-decoration:none; }
 
-  /* Vote form */
-  .month-badge { display: inline-block; font-size: 12px; background: var(--paper2); color: var(--ink2); padding: 4px 12px; border-radius: 20px; margin-bottom: 1.5rem; }
-  .section-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
-  .section-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1.25rem; }
-  .section-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-  .icon-hot { background: #fdecea; }
-  .icon-fav { background: #e8f5e9; }
-  .icon-shame { background: #fdf3e3; }
-  .section-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
-  .section-desc { font-size: 13px; color: var(--ink2); margin-top: 3px; line-height: 1.5; }
+.section { border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; background:var(--bg2); position:relative; transition:border-color 0.2s; }
+.section:hover { border-color:var(--border2); }
+.section::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0; transition:opacity 0.2s; border-radius:12px 12px 0 0; }
+.section.hot::before { background:linear-gradient(90deg,var(--red),var(--gold)); }
+.section.fav::before { background:linear-gradient(90deg,var(--green),var(--gold2)); }
+.section.shame::before { background:linear-gradient(90deg,var(--text3),var(--red)); }
+.section:hover::before { opacity:1; }
+.section-head { display:flex; gap:12px; align-items:flex-start; margin-bottom:1.25rem; }
+.section-marker { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.hot .section-marker { background:var(--red); }
+.fav .section-marker { background:var(--green); }
+.shame .section-marker { background:var(--text3); }
+.section-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; }
+.section-desc { font-size:12px; color:var(--text2); margin-top:3px; line-height:1.5; }
+.slots { display:flex; flex-direction:column; gap:8px; }
+.slot { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:center; }
+.slot-num { width:28px; height:28px; border-radius:50%; background:var(--bg3); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; color:var(--gold); flex-shrink:0; }
+.slot-num.r1 { background:rgba(212,168,67,0.12); }
 
-  .rank-slot { margin-bottom: 10px; }
-  .rank-label { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .rank-num { width: 22px; height: 22px; border-radius: 50%; background: var(--paper2); font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; color: var(--ink2); flex-shrink: 0; }
-  .rank-pts { font-size: 11px; color: var(--ink3); }
+.ac-wrap { position:relative; }
+.ac-input { width:100%; padding:9px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:'Outfit',sans-serif; font-weight:300; color:var(--text); outline:none; transition:border-color 0.2s; }
+.ac-input:focus { border-color:var(--gold); }
+.ac-input.has-value { border-color:rgba(58,122,80,0.6); background:rgba(58,122,80,0.06); }
+.selected-game { display:flex; align-items:center; gap:10px; padding:8px 10px; background:rgba(58,122,80,0.06); border:1px solid rgba(58,122,80,0.4); border-radius:8px; }
+.selected-thumb { width:40px; height:40px; border-radius:6px; object-fit:cover; background:var(--bg3); flex-shrink:0; border:1px solid var(--border); }
+.selected-thumb-placeholder { width:40px; height:40px; border-radius:6px; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.selected-info { flex:1; min-width:0; }
+.selected-name { font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.selected-year { font-size:11px; color:var(--text3); margin-top:2px; }
+.selected-clear { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:0 4px; line-height:1; flex-shrink:0; }
+.selected-clear:hover { color:var(--red); }
+.ac-input::placeholder { color:var(--text3); }
+.dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg2); border:1px solid var(--border2); border-radius:8px; z-index:999; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
+.dd-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s; display:flex; justify-content:space-between; align-items:center; }
+.dd-item:last-child { border-bottom:none; }
+.dd-item:hover,.dd-item.hi { background:var(--bg3); }
+.dd-name { font-size:13px; color:var(--text); }
+.dd-year { font-size:11px; color:var(--text3); }
+.dd-loading { padding:12px 14px; font-size:12px; color:var(--text3); }
 
-  /* BGG Autocomplete */
-  .autocomplete-wrap { position: relative; }
-  .autocomplete-wrap input { width: 100%; padding: 9px 14px; border: 1px solid var(--border); border-radius: var(--r); font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); outline: none; transition: border 0.15s; }
-  .autocomplete-wrap input:focus { border-color: var(--ink); background: #fff; }
-  .autocomplete-wrap input.selected { background: #f0fdf4; border-color: var(--green); }
-  .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--r) var(--r); z-index: 100; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .dropdown-item { padding: 9px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--paper2); display: flex; flex-direction: column; gap: 2px; }
-  .dropdown-item:last-child { border-bottom: none; }
-  .dropdown-item:hover, .dropdown-item.focused { background: var(--paper); }
-  .dropdown-item .game-title { color: var(--ink); font-weight: 500; }
-  .dropdown-item .game-year { color: var(--ink3); font-size: 11px; }
-  .dropdown-loading { padding: 10px 14px; font-size: 13px; color: var(--ink3); }
-  .selected-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--paper2); border-radius: 20px; padding: 3px 10px 3px 12px; font-size: 13px; margin-top: 5px; }
-  .clear-btn { background: none; border: none; cursor: pointer; color: var(--ink3); font-size: 14px; line-height: 1; padding: 0; }
+.progress-wrap { margin:1.75rem 0 1rem; }
+.prog-meta { font-size:11px; color:var(--text3); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; }
+.prog-meta span { color:var(--gold); }
+.prog-bar { height:2px; background:var(--bg3); border-radius:1px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--red),var(--gold)); border-radius:1px; transition:width 0.4s ease; }
 
-  .submit-area { margin-top: 2rem; }
-  .progress { display: flex; gap: 6px; margin-bottom: 1rem; }
-  .prog-dot { height: 4px; flex: 1; border-radius: 2px; background: var(--border); }
-  .prog-dot.filled { background: var(--accent); }
+.submit-btn { width:100%; padding:14px; background:var(--gold); color:var(--bg); border:none; border-radius:8px; font-size:14px; font-weight:500; font-family:'Outfit',sans-serif; cursor:pointer; letter-spacing:0.04em; transition:all 0.2s; }
+.submit-btn:hover:not(:disabled) { background:var(--gold2); }
+.submit-btn:disabled { opacity:0.25; cursor:not-allowed; }
 
-  /* Success */
-  .success-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 3rem 2rem; text-align: center; }
-  .success-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; margin-bottom: 0.75rem; }
-  .success-card p { font-size: 14px; color: var(--ink2); line-height: 1.7; }
-  .check { width: 56px; height: 56px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 24px; }
+.status-card { border:1px solid var(--border); border-radius:12px; padding:3rem 2rem; text-align:center; background:var(--bg2); }
+.status-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700; margin-bottom:0.75rem; }
+.status-desc { font-size:13px; color:var(--text2); line-height:1.7; }
+.status-link { display:inline-block; margin-top:1.5rem; font-size:13px; color:var(--gold); text-decoration:none; border-bottom:1px solid var(--border2); padding-bottom:2px; }
 
-  .closed-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 3rem 2rem; text-align: center; }
-  .closed-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem; }
-  .closed-card p { font-size: 14px; color: var(--ink2); }
+/* Skeleton loader */
+.skeleton { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; }
+.skel-line { height:12px; background:var(--bg3); border-radius:4px; margin-bottom:10px; animation:pulse 1.5s ease-in-out infinite; }
+.skel-line.short { width:40%; }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+
+.step { display:none; }
+.step.active { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.plays-btn { margin-top:10px; padding:7px 14px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--gold); font-size:12px; font-family:"Outfit",sans-serif; cursor:pointer; transition:all 0.2s; letter-spacing:0.03em; width:100%; }
+.plays-btn:hover:not(:disabled) { background:rgba(212,168,67,0.08); }
+.plays-btn:disabled { opacity:0.35; cursor:not-allowed; }
+.plays-panel { margin-top:10px; border:1px solid var(--border); border-radius:8px; overflow:hidden; animation:fadeIn 0.25s ease; }
+.plays-panel-header { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; padding:8px 12px; background:var(--bg3); border-bottom:1px solid var(--border); }
+.plays-list { display:flex; flex-direction:column; }
+.plays-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid var(--border); transition:background 0.1s; }
+.plays-item:last-child { border-bottom:none; }
+.plays-item-name { font-size:13px; color:var(--text); flex:1; }
+.plays-item-count { font-size:11px; color:var(--text3); white-space:nowrap; }
+
+.plays-empty { padding:12px; font-size:12px; color:var(--text3); text-align:center; }
+.plays-error { padding:12px; font-size:12px; color:var(--red); text-align:center; }
 </style>
+  <script src="config.js"></script>
 </head>
 <body>
 <div class="page">
 
   <div class="masthead">
-    <h1>Tabletop<br><em>Power Rankings</em></h1>
-    <div class="sub" id="sub-text">Vota · Vote</div>
+    <div class="eyebrow">Tabletop Power Rankings</div>
+    <h1 id="main-title">Tu voto<br><em>del mes</em></h1>
+    <div class="month-chip" id="month-label">—</div>
   </div>
 
-  <div class="lang-toggle">
-    <button class="lang-btn active" onclick="setLang('es')">Español</button>
-    <button class="lang-btn" onclick="setLang('en')">English</button>
+  <div class="lang">
+    <button class="active" onclick="setLang('es')">Español</button>
+    <button onclick="setLang('en')">English</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="step active" id="step-loading">
+    <div class="skeleton"><div class="skel-line short"></div><div class="skel-line"></div><div class="skel-line"></div></div>
+    <div class="skeleton"><div class="skel-line short"></div><div class="skel-line"></div><div class="skel-line"></div></div>
+  </div>
+
+  <!-- NO KEY -->
+  <div class="step" id="step-nokey">
+    <div class="status-card">
+      <div class="status-title" id="nokey-title">Enlace inválido</div>
+      <div class="status-desc" id="nokey-desc">Este enlace no es válido. Pide el enlace de votación del mes a un administrador.</div>
+      <a href="index.html" class="status-link" id="nokey-link">Ver rankings →</a>
+    </div>
   </div>
 
   <!-- CLOSED -->
   <div class="step" id="step-closed">
-    <div class="closed-card">
-      <div style="font-size:32px;margin-bottom:1rem">🔒</div>
-      <h2 id="closed-title">Votación cerrada</h2>
-      <p id="closed-desc">La votación de este mes aún no ha comenzado o ya ha finalizado. ¡Vuelve pronto!</p>
-      <p style="margin-top:1rem"><a href="index.html" style="color:var(--accent);font-size:14px" id="closed-link">Ver rankings →</a></p>
+    <div class="status-card">
+      <div class="status-title" id="closed-title">Votación cerrada</div>
+      <div class="status-desc" id="closed-desc">La ventana de votación ha expirado. Los resultados se publicarán pronto.</div>
+      <a href="index.html" class="status-link" id="closed-link">Ver rankings →</a>
     </div>
   </div>
 
-  <!-- STEP 1: Email -->
-  <div class="step" id="step-email">
-    <div class="email-card">
-      <h2 id="email-title">Tu email</h2>
-      <p id="email-desc">Introduce tu email para recibir tu enlace de votación único. Solo se permite un voto por persona.</p>
-      <div class="field">
-        <label id="email-label">Email</label>
-        <input type="email" id="email-input" placeholder="tu@email.com" autocomplete="email">
-      </div>
-      <button class="btn" id="email-btn" onclick="requestToken()">
-        <span id="email-btn-text">Enviar enlace / Send link</span>
-      </button>
-      <div id="email-msg"></div>
-    </div>
-  </div>
-
-  <!-- STEP 2: Vote form -->
+  <!-- VOTE FORM -->
   <div class="step" id="step-vote">
-    <div class="month-badge" id="month-badge">— 2026</div>
-
-    <!-- Section 1: Hotness -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-icon icon-hot">🔥</div>
-        <div>
-          <div class="section-title" id="hot-title">Novedades del mes</div>
-          <div class="section-desc" id="hot-desc">Juegos nuevos que has jugado este mes. Ordénalos por emoción.</div>
+    <div class="about-card">
+      <div class="about-title" id="about-title">Sobre ti</div>
+      <div class="fields-row">
+        <div class="field">
+          <label><span class="required-dot"></span><span id="city-label">Ciudad</span></label>
+          <input type="text" id="city-input" placeholder="Madrid, Buenos Aires..." autocomplete="off">
+          <div class="error-msg" id="city-error">Indica tu ciudad para continuar</div>
+        </div>
+        <div class="field">
+          <label><span id="bgg-label">Usuario BGG</span><span class="optional-tag" id="bgg-opt">opcional</span></label>
+          <input type="text" id="bgg-input" placeholder="tu_usuario" autocomplete="off">
+          <div class="bgg-hint"><a href="https://boardgamegeek.com" target="_blank">boardgamegeek.com</a></div>
         </div>
       </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">1</div><span class="rank-pts" id="hot-pts1">3 pts</span></div>
-        <div class="autocomplete-wrap" id="hot1-wrap"></div>
-      </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">2</div><span class="rank-pts" id="hot-pts2">2 pts</span></div>
-        <div class="autocomplete-wrap" id="hot2-wrap"></div>
-      </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">3</div><span class="rank-pts" id="hot-pts3">1 pt</span></div>
-        <div class="autocomplete-wrap" id="hot3-wrap"></div>
-      </div>
-    </div>
-
-    <!-- Section 2: Favorites -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-icon icon-fav">❤️</div>
-        <div>
-          <div class="section-title" id="fav-title">Favoritos eternos</div>
-          <div class="section-desc" id="fav-desc">Juegos que siempre quieres volver a jugar. Pueden ser de cualquier época.</div>
-        </div>
-      </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">1</div><span class="rank-pts">3 pts</span></div>
-        <div class="autocomplete-wrap" id="fav1-wrap"></div>
-      </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">2</div><span class="rank-pts">2 pts</span></div>
-        <div class="autocomplete-wrap" id="fav2-wrap"></div>
-      </div>
-      <div class="rank-slot">
-        <div class="rank-label"><div class="rank-num">3</div><span class="rank-pts">1 pt</span></div>
-        <div class="autocomplete-wrap" id="fav3-wrap"></div>
-      </div>
-    </div>
-
-    <!-- Section 3: Shame -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-icon icon-shame">😬</div>
-        <div>
-          <div class="section-title" id="shame-title">Nunca más</div>
-          <div class="section-desc" id="shame-desc">Un solo juego que no quieres volver a ver en la mesa.</div>
-        </div>
-      </div>
-      <div class="autocomplete-wrap" id="shame-wrap"></div>
-    </div>
-
-    <div class="submit-area">
-      <div class="progress">
-        <div class="prog-dot" id="prog0"></div>
-        <div class="prog-dot" id="prog1"></div>
-        <div class="prog-dot" id="prog2"></div>
-        <div class="prog-dot" id="prog3"></div>
-        <div class="prog-dot" id="prog4"></div>
-        <div class="prog-dot" id="prog5"></div>
-        <div class="prog-dot" id="prog6"></div>
-      </div>
-      <button class="btn" id="submit-btn" onclick="submitVote()" disabled>
-        <span id="submit-btn-text">Enviar voto / Submit vote</span>
+      <button class="plays-btn" id="load-plays-btn" disabled onclick="loadPlays()">
+        <span id="load-plays-txt">Cargar mis partidas del mes · Load my plays</span>
       </button>
-      <div id="vote-msg"></div>
+      <div id="plays-panel" style="display:none"></div>
     </div>
+
+    <div class="section hot">
+      <div class="section-head"><div class="section-marker"></div>
+        <div><div class="section-title" id="hot-title">Novedades del mes</div><div class="section-desc" id="hot-desc">Juegos nuevos que jugaste este mes. Ordénalos de mayor a menor emoción.</div></div>
+      </div>
+      <div class="slots">
+        <div class="slot"><div class="slot-num r1">1</div><div class="ac-wrap" id="hot1"></div></div>
+        <div class="slot"><div class="slot-num">2</div><div class="ac-wrap" id="hot2"></div></div>
+        <div class="slot"><div class="slot-num">3</div><div class="ac-wrap" id="hot3"></div></div>
+      </div>
+    </div>
+
+    <div class="section fav">
+      <div class="section-head"><div class="section-marker"></div>
+        <div><div class="section-title" id="fav-title">Favoritos eternos</div><div class="section-desc" id="fav-desc">Juegos que siempre quieres volver a jugar, de cualquier época.</div></div>
+      </div>
+      <div class="slots">
+        <div class="slot"><div class="slot-num r1">1</div><div class="ac-wrap" id="fav1"></div></div>
+        <div class="slot"><div class="slot-num">2</div><div class="ac-wrap" id="fav2"></div></div>
+        <div class="slot"><div class="slot-num">3</div><div class="ac-wrap" id="fav3"></div></div>
+      </div>
+    </div>
+
+    <div class="section shame">
+      <div class="section-head"><div class="section-marker"></div>
+        <div><div class="section-title" id="shame-title">Nunca más</div><div class="section-desc" id="shame-desc">Un juego que no quieres volver a ver en la mesa. Solo uno.</div></div>
+      </div>
+      <div class="ac-wrap" id="shame1"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="prog-meta"><span id="prog-label">0 de 7 campos</span><span id="prog-pct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <button class="submit-btn" id="submit-btn" disabled>
+      <span id="submit-txt">Enviar voto · Submit vote</span>
+    </button>
   </div>
 
-  <!-- STEP 3: Success -->
+  <!-- SUCCESS -->
   <div class="step" id="step-success">
-    <div class="success-card">
-      <div class="check">✓</div>
-      <h2 id="success-title">¡Voto registrado!</h2>
-      <p id="success-desc">Tu voto ha sido registrado. Los resultados se publicarán en unos días.</p>
-      <p style="margin-top:1.5rem"><a href="index.html" style="color:var(--accent);font-size:14px" id="success-link">Ver rankings →</a></p>
+    <div class="status-card">
+      <div class="status-title" id="success-title">¡Voto enviado!</div>
+      <div class="status-desc" id="success-desc">Tu voto ha sido registrado. Los resultados se publicarán en unos días.</div>
+      <a href="index.html" class="status-link" id="success-link">Ver rankings →</a>
     </div>
   </div>
 
 </div>
-
 <script>
-const API_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL"; // Replace with your deployed Apps Script URL
-const BGG_PROXY = "https://api.allorigins.win/raw?url=";
+// BGG proxy options — tries each in order if previous fails
+const BGG_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.allorigins.win/raw?url=",
+];
+
+// Local game cache — loaded once on init
+let gamesCache = [];
+async function loadGamesCache(){
+  try{
+    const res = await fetch('games-cache.json');
+    gamesCache = await res.json();
+  }catch(e){ gamesCache = []; }
+}
+
+// Search cache locally
+function searchCache(q){
+  const ql = q.toLowerCase();
+  return gamesCache
+    .filter(g => g.name.toLowerCase().includes(ql))
+    .sort((a,b) => {
+      // Exact start match ranked higher
+      const as = a.name.toLowerCase().startsWith(ql);
+      const bs = b.name.toLowerCase().startsWith(ql);
+      if(as && !bs) return -1;
+      if(!as && bs) return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 8);
+}
 const BGG_SEARCH = "https://boardgamegeek.com/xmlapi2/search?type=boardgame&query=";
 
 let lang = "es";
-let currentToken = null;
-let selections = { hot1:null, hot2:null, hot3:null, fav1:null, fav2:null, fav3:null, shame:null };
+let voteConfig = null; // populated from server: { month, monthLabelEs, monthLabelEn, expiryDate, key }
+const sel = { hot1:null,hot2:null,hot3:null,fav1:null,fav2:null,fav3:null,shame1:null };
+const cache = {};
 
 const T = {
-  es: {
-    sub: "Vota · Vote",
-    closed_title: "Votación cerrada",
-    closed_desc: "La votación de este mes aún no ha comenzado o ya ha finalizado. ¡Vuelve pronto!",
-    closed_link: "Ver rankings →",
-    email_title: "Tu email",
-    email_desc: "Introduce tu email para recibir tu enlace de votación único. Solo se permite un voto por persona.",
-    email_label: "Email",
-    email_btn: "Enviar enlace",
-    email_sending: "Enviando...",
-    email_sent: "¡Enlace enviado! Revisa tu bandeja de entrada.",
-    email_already: "Ya has votado este mes.",
-    email_closed: "La votación está cerrada.",
-    email_error: "Error al enviar. Inténtalo de nuevo.",
-    hot_title: "Novedades del mes",
-    hot_desc: "Juegos nuevos que has jugado este mes. Ordénalos por emoción.",
-    fav_title: "Favoritos eternos",
-    fav_desc: "Juegos que siempre quieres volver a jugar. Pueden ser de cualquier época.",
-    shame_title: "Nunca más",
-    shame_desc: "Un solo juego que no quieres volver a ver en la mesa.",
-    hot_pts: ["3 puntos — más emocionante", "2 puntos", "1 punto"],
-    placeholder: "Buscar juego...",
-    submit_btn: "Enviar voto",
-    submitting: "Enviando...",
-    success_title: "¡Voto registrado!",
-    success_desc: "Tu voto ha sido registrado. Los resultados se publicarán en unos días.",
-    success_link: "Ver rankings →",
-    invalid_token: "Enlace inválido o expirado. Solicita uno nuevo.",
-    vote_error: "Error al enviar el voto. Inténtalo de nuevo.",
+  es:{
+    main_title:["Tu voto","del mes"],
+    nokey_title:"Enlace inválido", nokey_desc:"Este enlace no es válido. Pide el enlace de votación a un administrador.", nokey_link:"Ver rankings →",
+    closed_title:"Votación cerrada", closed_desc:"La ventana de votación ha expirado. Los resultados se publicarán pronto.", closed_link:"Ver rankings →",
+    about_title:"Sobre ti", city_label:"Ciudad", bgg_label:"Usuario BGG", bgg_opt:"opcional",
+    city_ph:"Madrid, Buenos Aires...", bgg_ph:"tu_usuario", city_error:"Indica tu ciudad para continuar",
+    hot_title:"Novedades del mes", hot_desc:"Juegos que jugaste este mes. Ordénalos de mayor a menor emoción.",
+    fav_title:"Favoritos eternos", fav_desc:"Juegos que siempre quieres volver a jugar, de cualquier época.",
+    shame_title:"Nunca más", shame_desc:"Un juego que no quieres volver a ver en la mesa. Solo uno.",
+    placeholder:"Buscar en BGG...", searching:"Buscando...", no_results:"Sin resultados", manual_entry:"Añadir manualmente",
+    submit:"Enviar voto", submitting:"Enviando...",
+    success_title:"¡Voto enviado!", success_desc:"Tu voto ha sido registrado. Los resultados se publicarán en unos días.", success_link:"Ver rankings →",
+    already:"Ya has votado este mes desde este navegador.",
+    progress:n=>`${n} de 7 campos`, pct:n=>`${Math.round(n/7*100)}%`,
   },
-  en: {
-    sub: "Vote · Vota",
-    closed_title: "Voting closed",
-    closed_desc: "This month's voting hasn't started yet or has already ended. Check back soon!",
-    closed_link: "View rankings →",
-    email_title: "Your email",
-    email_desc: "Enter your email to receive your unique voting link. One vote per person only.",
-    email_label: "Email",
-    email_btn: "Send link",
-    email_sending: "Sending...",
-    email_sent: "Link sent! Check your inbox.",
-    email_already: "You've already voted this month.",
-    email_closed: "Voting is currently closed.",
-    email_error: "Error sending. Please try again.",
-    hot_title: "This month's hotness",
-    hot_desc: "New games you played this month. Rank them by excitement.",
-    fav_title: "Eternal favorites",
-    fav_desc: "Games you always want to play again. Can be from any era.",
-    shame_title: "Never again",
-    shame_desc: "One game you never want to see on the table again.",
-    hot_pts: ["3 points — most exciting", "2 points", "1 point"],
-    placeholder: "Search for a game...",
-    submit_btn: "Submit vote",
-    submitting: "Submitting...",
-    success_title: "Vote recorded!",
-    success_desc: "Your vote has been recorded. Results will be published in a few days.",
-    success_link: "View rankings →",
-    invalid_token: "Invalid or expired link. Request a new one.",
-    vote_error: "Error submitting vote. Please try again.",
+  en:{
+    main_title:["Your vote","this month"],
+    nokey_title:"Invalid link", nokey_desc:"This link is not valid. Ask an admin for this month's voting link.", nokey_link:"View rankings →",
+    closed_title:"Voting closed", closed_desc:"The voting window has expired. Results will be published soon.", closed_link:"View rankings →",
+    about_title:"About you", city_label:"City", bgg_label:"BGG username", bgg_opt:"optional",
+    city_ph:"Madrid, Buenos Aires...", bgg_ph:"your_username", city_error:"Please enter your city to continue",
+    hot_title:"This month's hotness", hot_desc:"Games you played this month. Rank them by excitement.",
+    fav_title:"Eternal favorites", fav_desc:"Games you always want to play again, from any era.",
+    shame_title:"Never again", shame_desc:"One game you never want to see on the table again.",
+    placeholder:"Search BGG...", searching:"Searching...", no_results:"No results", manual_entry:"Add manually",
+    submit:"Submit vote", submitting:"Submitting...",
+    success_title:"Vote submitted!", success_desc:"Your vote has been recorded. Results will be published in a few days.", success_link:"View rankings →",
+    already:"You already voted this month from this browser.",
+    progress:n=>`${n} of 7 fields`, pct:n=>`${Math.round(n/7*100)}%`,
   }
 };
 
-function t(key) { return T[lang][key] || key; }
+function t(k,...a){ const v=T[lang][k]; return typeof v==='function'?v(...a):v; }
 
-function setLang(l) {
-  lang = l;
-  document.querySelectorAll('.lang-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&l==='es')||(i===1&&l==='en')));
-  updateTexts();
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang button').forEach((b,i)=>b.classList.toggle('active',(i===0&&l==='es')||(i===1&&l==='en')));
+  applyTexts();
+  document.querySelectorAll('.ac-input').forEach(inp=>inp.placeholder=t('placeholder'));
 }
 
-function updateTexts() {
-  const keys = ['sub','closed_title','closed_desc','closed_link','email_title','email_desc',
-    'email_label','hot_title','hot_desc','fav_title','fav_desc','shame_title','shame_desc',
-    'success_title','success_desc','success_link'];
-  const map = {
-    'sub':'sub-text','closed_title':'closed-title','closed_desc':'closed-desc','closed_link':'closed-link',
-    'email_title':'email-title','email_desc':'email-desc','email_label':'email-label',
-    'hot_title':'hot-title','hot_desc':'hot-desc','fav_title':'fav-title','fav_desc':'fav-desc',
-    'shame_title':'shame-title','shame_desc':'shame-desc',
-    'success_title':'success-title','success_desc':'success-desc','success_link':'success-link'
-  };
-  Object.entries(map).forEach(([k,id]) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = t(k);
-  });
-  document.getElementById('email-btn-text').textContent = t('email_btn');
-  document.getElementById('submit-btn-text').textContent = t('submit_btn');
-  const pts = t('hot_pts');
-  ['hot-pts1','hot-pts2','hot-pts3'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = pts[i];
-  });
-  // Update placeholders
-  document.querySelectorAll('.ac-input').forEach(inp => inp.placeholder = t('placeholder'));
-}
-
-// ============================================================
-// BGG AUTOCOMPLETE
-// ============================================================
-
-const bggCache = {};
-let activeDropdown = null;
-
-function createAutocomplete(wrapperId, selectionKey) {
-  const wrap = document.getElementById(wrapperId);
-  wrap.innerHTML = '';
-
-  const input = document.createElement('input');
-  input.className = 'ac-input';
-  input.placeholder = t('placeholder');
-  input.autocomplete = 'off';
-
-  const dropdown = document.createElement('div');
-  dropdown.className = 'dropdown';
-  dropdown.style.display = 'none';
-
-  wrap.appendChild(input);
-  wrap.appendChild(dropdown);
-
-  let debounceTimer;
-  let focusIdx = -1;
-
-  input.addEventListener('input', () => {
-    const q = input.value.trim();
-    if (selections[selectionKey]) { clearSelection(selectionKey, wrap, input); }
-    if (q.length < 2) { dropdown.style.display = 'none'; return; }
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => searchBGG(q, dropdown, input, selectionKey, wrap), 350);
-  });
-
-  input.addEventListener('keydown', (e) => {
-    const items = dropdown.querySelectorAll('.dropdown-item');
-    if (e.key === 'ArrowDown') { focusIdx = Math.min(focusIdx+1, items.length-1); highlightItem(items, focusIdx); e.preventDefault(); }
-    if (e.key === 'ArrowUp')   { focusIdx = Math.max(focusIdx-1, 0); highlightItem(items, focusIdx); e.preventDefault(); }
-    if (e.key === 'Enter' && focusIdx >= 0) { items[focusIdx].click(); e.preventDefault(); }
-    if (e.key === 'Escape') { dropdown.style.display = 'none'; }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!wrap.contains(e.target)) dropdown.style.display = 'none';
-  });
-}
-
-function highlightItem(items, idx) {
-  items.forEach((item, i) => item.classList.toggle('focused', i === idx));
-}
-
-async function searchBGG(query, dropdown, input, selectionKey, wrap) {
-  const cacheKey = query.toLowerCase();
-  if (bggCache[cacheKey]) { renderDropdown(bggCache[cacheKey], dropdown, input, selectionKey, wrap); return; }
-
-  dropdown.innerHTML = '<div class="dropdown-loading">Buscando / Searching...</div>';
-  dropdown.style.display = 'block';
-
-  try {
-    const url = BGG_PROXY + encodeURIComponent(BGG_SEARCH + encodeURIComponent(query));
-    const res = await fetch(url);
-    const text = await res.text();
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, 'text/xml');
-    const items = [...xml.querySelectorAll('item')].slice(0, 8).map(item => ({
-      id: item.getAttribute('id'),
-      name: item.querySelector('name[type="primary"]')?.getAttribute('value') || item.querySelector('name')?.getAttribute('value') || '?',
-      year: item.querySelector('yearpublished')?.getAttribute('value') || ''
-    }));
-    bggCache[cacheKey] = items;
-    renderDropdown(items, dropdown, input, selectionKey, wrap);
-  } catch(e) {
-    dropdown.innerHTML = '<div class="dropdown-loading">Error de conexión / Connection error</div>';
+function applyTexts(){
+  const h=t('main_title');
+  document.getElementById('main-title').innerHTML=h[0]+'<br><em>'+h[1]+'</em>';
+  if(voteConfig){
+    document.getElementById('month-label').textContent = lang==='es' ? voteConfig.monthLabelEs : voteConfig.monthLabelEn;
   }
-}
-
-function renderDropdown(items, dropdown, input, selectionKey, wrap) {
-  if (!items.length) { dropdown.innerHTML = '<div class="dropdown-loading">Sin resultados / No results</div>'; dropdown.style.display='block'; return; }
-  dropdown.innerHTML = items.map((item,i) =>
-    `<div class="dropdown-item" data-idx="${i}">
-      <span class="game-title">${item.name}</span>
-      <span class="game-year">${item.year ? 'BGG #'+item.id+' · '+item.year : 'BGG #'+item.id}</span>
-    </div>`
-  ).join('');
-  dropdown.style.display = 'block';
-  dropdown.querySelectorAll('.dropdown-item').forEach((el, i) => {
-    el.addEventListener('click', () => selectGame(items[i], input, dropdown, selectionKey, wrap));
-  });
-}
-
-function selectGame(game, input, dropdown, selectionKey, wrap) {
-  selections[selectionKey] = game;
-  input.value = game.name;
-  input.classList.add('selected');
-  dropdown.style.display = 'none';
+  const map={
+    'nokey-title':'nokey_title','nokey-desc':'nokey_desc','nokey-link':'nokey_link',
+    'closed-title':'closed_title','closed-desc':'closed_desc','closed-link':'closed_link',
+    'about-title':'about_title','city-label':'city_label','bgg-label':'bgg_label','bgg-opt':'bgg_opt',
+    'hot-title':'hot_title','hot-desc':'hot_desc','fav-title':'fav_title','fav-desc':'fav_desc',
+    'shame-title':'shame_title','shame-desc':'shame_desc',
+    'success-title':'success_title','success-desc':'success_desc','success-link':'success_link',
+    'submit-txt':'submit','city-error':'city_error'
+  };
+  Object.entries(map).forEach(([id,k])=>{ const el=document.getElementById(id); if(el) el.textContent=t(k); });
+  document.getElementById('city-input').placeholder=t('city_ph');
+  document.getElementById('bgg-input').placeholder=t('bgg_ph');
   updateProgress();
-  checkSubmitReady();
 }
 
-function clearSelection(selectionKey, wrap, input) {
-  selections[selectionKey] = null;
-  input.classList.remove('selected');
+function updateProgress(){
+  const filled=Object.values(sel).filter(Boolean).length;
+  document.getElementById('prog-label').textContent=t('progress',filled);
+  document.getElementById('prog-pct').textContent=t('pct',filled);
+  document.getElementById('prog-fill').style.width=Math.round(filled/7*100)+'%';
+  const cityOk=document.getElementById('city-input').value.trim().length>0;
+  const hasHot=sel.hot1||sel.hot2||sel.hot3;
+  const hasFav=sel.fav1||sel.fav2||sel.fav3;
+  document.getElementById('submit-btn').disabled=!(cityOk&&hasHot&&hasFav&&sel.shame1);
+}
+
+document.getElementById('city-input').addEventListener('input',function(){
+  this.classList.toggle('filled',this.value.trim().length>0);
+  this.classList.remove('error');
+  document.getElementById('city-error').classList.remove('show');
   updateProgress();
-  checkSubmitReady();
-}
+});
+document.getElementById('city-input').addEventListener('blur',function(){
+  if(!this.value.trim()){ this.classList.add('error'); document.getElementById('city-error').classList.add('show'); }
+});
 
-function updateProgress() {
-  const keys = ['hot1','hot2','hot3','fav1','fav2','fav3','shame'];
-  keys.forEach((k,i) => {
-    const dot = document.getElementById('prog'+i);
-    if (dot) dot.classList.toggle('filled', !!selections[k]);
-  });
-}
+// Enable load plays button when BGG username is typed
+document.getElementById('bgg-input').addEventListener('input',function(){
+  const btn = document.getElementById('load-plays-btn');
+  btn.disabled = this.value.trim().length < 2;
+  // Reset plays panel if username changes
+  document.getElementById('plays-panel').style.display='none';
+});
 
-function checkSubmitReady() {
-  const btn = document.getElementById('submit-btn');
-  // At least one from each section
-  const hasHot = selections.hot1 || selections.hot2 || selections.hot3;
-  const hasFav = selections.fav1 || selections.fav2 || selections.fav3;
-  const hasShame = selections.shame;
-  btn.disabled = !(hasHot && hasFav && hasShame);
-}
+async function loadPlays(){
+  const username = document.getElementById('bgg-input').value.trim();
+  if(!username) return;
 
-// ============================================================
-// EMAIL / TOKEN
-// ============================================================
+  const btn = document.getElementById('load-plays-btn');
+  const panel = document.getElementById('plays-panel');
+  const txt = document.getElementById('load-plays-txt');
 
-async function requestToken() {
-  const email = document.getElementById('email-input').value.trim();
-  if (!email || !email.includes('@')) return;
-  const btn = document.getElementById('email-btn');
-  const msgEl = document.getElementById('email-msg');
   btn.disabled = true;
-  document.getElementById('email-btn-text').textContent = t('email_sending');
-  msgEl.innerHTML = '';
+  txt.textContent = lang==='es' ? 'Cargando...' : 'Loading...';
+  panel.style.display = 'none';
+
   try {
-    const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'requestToken', email }) });
+    const res = await fetch(API_URL+'?action=getPlays&username='+encodeURIComponent(username)+'&month='+encodeURIComponent(voteConfig.month));
     const data = await res.json();
-    if (data.error === 'already_voted') {
-      showMsg('email-msg', t('email_already'), 'info');
-    } else if (data.error === 'Voting is currently closed') {
-      showMsg('email-msg', t('email_closed'), 'error');
-    } else if (data.success) {
-      showMsg('email-msg', t('email_sent'), 'success');
+
+    if(data.error){
+      panel.innerHTML = `<div class="plays-panel"><div class="plays-error">${data.error}</div></div>`;
+      panel.style.display = 'block';
+    } else if(!data.plays || data.plays.length === 0){
+      const msg = lang==='es'
+        ? 'No se encontraron partidas registradas este mes en BGG.'
+        : 'No logged plays found for this month on BGG.';
+      panel.innerHTML = `<div class="plays-panel"><div class="plays-empty">${msg}</div></div>`;
+      panel.style.display = 'block';
     } else {
-      showMsg('email-msg', t('email_error'), 'error');
+      renderPlaysPanel(data.plays);
     }
   } catch(e) {
-    showMsg('email-msg', t('email_error'), 'error');
+    const msg = lang==='es' ? 'Error al conectar con BGG.' : 'Could not connect to BGG.';
+    panel.innerHTML = `<div class="plays-panel"><div class="plays-error">${msg}</div></div>`;
+    panel.style.display = 'block';
   }
+
   btn.disabled = false;
-  document.getElementById('email-btn-text').textContent = t('email_btn');
+  txt.textContent = lang==='es' ? 'Cargar mis partidas del mes · Load my plays' : 'Cargar mis partidas del mes · Load my plays';
 }
 
-async function submitVote() {
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  document.getElementById('submit-btn-text').textContent = t('submitting');
+function renderPlaysPanel(plays){
+  const panel = document.getElementById('plays-panel');
+  const header = lang==='es'
+    ? 'Partidas registradas este mes en BGG'
+    : 'Your logged plays this month on BGG';
 
-  const payload = {
-    action: 'submitVote',
-    token: currentToken,
-    hot1: selections.hot1?.name,   hotId1: selections.hot1?.id,
-    hot2: selections.hot2?.name,   hotId2: selections.hot2?.id,
-    hot3: selections.hot3?.name,   hotId3: selections.hot3?.id,
-    fav1: selections.fav1?.name,   favId1: selections.fav1?.id,
-    fav2: selections.fav2?.name,   favId2: selections.fav2?.id,
-    fav3: selections.fav3?.name,   favId3: selections.fav3?.id,
-    shame: selections.shame?.name, shameId: selections.shame?.id
-  };
+  const rows = plays.map(p => {
+    const countTxt = p.plays === 1
+      ? (lang==='es' ? '1 partida' : '1 play')
+      : `${p.plays} ${lang==='es' ? 'partidas' : 'plays'}`;
+    return `<div class="plays-item">
+      <span class="plays-item-name">${p.name}</span>
+      <span class="plays-item-count">${countTxt}</span>
+    </div>`;
+  }).join('');
 
-  try {
-    const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (data.success) {
-      showStep('step-success');
-    } else {
-      showMsg('vote-msg', t('vote_error'), 'error');
-      btn.disabled = false;
-      document.getElementById('submit-btn-text').textContent = t('submit_btn');
+  panel.innerHTML = `<div class="plays-panel">
+    <div class="plays-panel-header">${header}</div>
+    <div class="plays-list">${rows}</div>
+  </div>`;
+  panel.style.display = 'block';
+}
+
+// BGG Autocomplete
+function makeAC(containerId,key){
+  const wrap=document.getElementById(containerId);
+  const input=document.createElement('input');
+  input.className='ac-input'; input.placeholder=t('placeholder'); input.autocomplete='off';
+  const dd=document.createElement('div'); dd.className='dropdown'; dd.style.display='none';
+  const selectedDiv=document.createElement('div'); selectedDiv.className='selected-game'; selectedDiv.style.display='none';
+  wrap.appendChild(input); wrap.appendChild(dd); wrap.appendChild(selectedDiv);
+  let timer,focusIdx=-1;
+  input.addEventListener('input',()=>{
+    if(sel[key]){ sel[key]=null; input.classList.remove('has-value'); updateProgress(); }
+    const q=input.value.trim();
+    if(q.length<2){ dd.style.display='none'; return; }
+    clearTimeout(timer); timer=setTimeout(()=>doSearch(q,dd,input,key),380);
+  });
+  input.addEventListener('keydown',e=>{
+    const items=dd.querySelectorAll('.dd-item');
+    if(e.key==='ArrowDown'){ focusIdx=Math.min(focusIdx+1,items.length-1); hilite(items,focusIdx); e.preventDefault(); }
+    if(e.key==='ArrowUp')  { focusIdx=Math.max(focusIdx-1,0); hilite(items,focusIdx); e.preventDefault(); }
+    if(e.key==='Enter'){
+      if(focusIdx>=0){ items[focusIdx].click(); }
+      else if(!sel[key]&&input.value.trim().length>=2){
+        pick({id:null,name:input.value.trim(),year:''},input,dd,key);
+      }
+      dd.style.display='none'; e.preventDefault();
     }
-  } catch(e) {
-    showMsg('vote-msg', t('vote_error'), 'error');
-    btn.disabled = false;
-    document.getElementById('submit-btn-text').textContent = t('submit_btn');
+    if(e.key==='Escape') dd.style.display='none';
+  });
+  // Accept typed text on blur only if user clicks completely outside the autocomplete
+  let mousedownInsideDd = false;
+  dd.addEventListener('mousedown', () => { mousedownInsideDd = true; });
+  dd.addEventListener('mouseup',   () => { mousedownInsideDd = false; });
+
+  input.addEventListener('blur', () => {
+    if(mousedownInsideDd) return; // user is clicking a dropdown item, don't blur-commit
+    setTimeout(() => {
+      dd.style.display = 'none';
+      if(!sel[key] && input.value.trim().length >= 2){
+        pick({id:null, name:input.value.trim(), year:''}, input, dd, key);
+      }
+    }, 200);
+  });
+  document.addEventListener('click', e => { if(!wrap.contains(e.target)) dd.style.display='none'; });
+}
+
+function hilite(items,idx){ items.forEach((it,i)=>it.classList.toggle('hi',i===idx)); }
+
+async function doSearch(q,dd,input,key){
+  const ck=q.toLowerCase();
+  if(cache[ck]){ renderDD(cache[ck],dd,input,key); return; }
+
+  // 1. Check local cache instantly
+  const cached = searchCache(q);
+  if(cached.length){
+    renderDD(cached,dd,input,key);
+    // Also try BGG in background to enrich results
+    tryBGG(q,dd,input,key);
+    return;
+  }
+
+  // 2. No local results — hit BGG
+  dd.innerHTML=`<div class="dd-loading">${t('searching')}</div>`; dd.style.display='block';
+  await tryBGG(q,dd,input,key);
+}
+
+async function tryBGG(q,dd,input,key){
+  const ck=q.toLowerCase();
+  let items=null;
+  for(const proxy of BGG_PROXIES){
+    try{
+      const url=proxy+encodeURIComponent(BGG_SEARCH+encodeURIComponent(q));
+      const res=await fetch(url,{signal:AbortSignal.timeout(5000)});
+      const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+      items=[...xml.querySelectorAll('item')].slice(0,8).map(it=>({
+        id:it.getAttribute('id'),
+        name:it.querySelector('name[type="primary"]')?.getAttribute('value')||it.querySelector('name')?.getAttribute('value')||'?',
+        year:it.querySelector('yearpublished')?.getAttribute('value')||''
+      }));
+      if(items.length) break;
+    }catch(e){ continue; }
+  }
+  if(items&&items.length){
+    cache[ck]=items;
+    // Only re-render if input still has the same query
+    if(input.value.trim().toLowerCase()===ck) renderDD(items,dd,input,key);
+  } else if(dd.style.display==='block'&&!dd.querySelector('.dd-item:not(.dd-manual)')){
+    // BGG failed and no results showing — show manual entry
+    dd.innerHTML=`<div class="dd-item dd-manual"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+    dd.style.display='block';
+    dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
   }
 }
 
-// ============================================================
-// INIT
-// ============================================================
+function renderDD(items,dd,input,key){
+  const q=input.value.trim();
+  if(!items.length){
+    dd.innerHTML=`<div class="dd-item dd-manual"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+    dd.style.display='block';
+    dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
+    return;
+  }
+  // Always append a manual entry option at the bottom
+  const manualHtml=`<div class="dd-item dd-manual" style="border-top:1px solid var(--border)"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
+  dd.innerHTML=items.map(it=>`<div class="dd-item"><span class="dd-name">${it.name}</span><span class="dd-year">${it.year||''}</span></div>`).join('')+manualHtml;
+  dd.style.display='block';
+  dd.querySelectorAll('.dd-item:not(.dd-manual)').forEach((el,i)=>el.addEventListener('click',()=>pick(items[i],input,dd,key)));
+  dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
+}
 
-function showStep(id) {
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+function pick(game,input,dd,key){
+  sel[key]=game; dd.style.display='none';
+  // Show selected card, hide input
+  const wrap=input.parentElement;
+  const selectedDiv=wrap.querySelector('.selected-game');
+  input.style.display='none';
+  selectedDiv.style.display='flex';
+  selectedDiv.innerHTML=`
+    <div class="selected-thumb-placeholder" id="thumb-${key}">🎲</div>
+    <div class="selected-info">
+      <div class="selected-name">${game.name}</div>
+      <div class="selected-year">${game.year||''}</div>
+    </div>
+    <button class="selected-clear" onclick="clearPick('${key}')" title="Clear">×</button>`;
+  // Fetch thumbnail if we have a BGG ID
+  if(game.id) fetchThumb(game.id, key);
+  updateProgress();
+}
+
+function clearPick(key){
+  sel[key]=null;
+  const wrap=document.getElementById(key);
+  const input=wrap.querySelector('.ac-input');
+  const selectedDiv=wrap.querySelector('.selected-game');
+  input.value='';
+  input.style.display='';
+  selectedDiv.style.display='none';
+  selectedDiv.innerHTML='';
+  updateProgress();
+}
+
+const thumbCache={};
+async function fetchThumb(bggId, key){
+  // Check cache first
+  if(thumbCache[bggId]){
+    setThumb(key, thumbCache[bggId]); return;
+  }
+  try{
+    // Use BGG thumbnail from cache file if available
+    const cached=gamesCache.find(g=>g.id===bggId);
+    if(cached&&cached.thumb){
+      thumbCache[bggId]=cached.thumb;
+      setThumb(key, cached.thumb); return;
+    }
+    // Fetch from BGG via proxy
+    const proxy='https://corsproxy.io/?';
+    const url=proxy+encodeURIComponent(`https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&type=boardgame`);
+    const res=await fetch(url,{signal:AbortSignal.timeout(6000)});
+    const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+    const thumb=xml.querySelector('thumbnail')?.textContent?.trim();
+    if(thumb){
+      thumbCache[bggId]=thumb;
+      setThumb(key, thumb);
+      // Also store in games cache for this session
+      const entry=gamesCache.find(g=>g.id===bggId);
+      if(entry) entry.thumb=thumb;
+    }
+  }catch(e){ /* silent fail — placeholder stays */ }
+}
+
+function setThumb(key, url){
+  const placeholder=document.getElementById('thumb-'+key);
+  if(!placeholder) return;
+  const img=document.createElement('img');
+  img.className='selected-thumb';
+  img.src=url;
+  img.alt='';
+  img.onerror=()=>{}; // keep placeholder on error
+  placeholder.replaceWith(img);
+}
+
+function showStep(id){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function showMsg(id, text, type) {
-  const el = document.getElementById(id);
-  el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+async function submitVote(){
+  const cityVal=document.getElementById('city-input').value.trim();
+  if(!cityVal){
+    document.getElementById('city-input').classList.add('error');
+    document.getElementById('city-error').classList.add('show');
+    document.getElementById('city-input').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true; document.getElementById('submit-txt').textContent=t('submitting');
+  const cookieKey='voted_'+voteConfig.month;
+  if(document.cookie.includes(cookieKey)){
+    alert(t('already')); btn.disabled=false; document.getElementById('submit-txt').textContent=t('submit'); return;
+  }
+  try{
+    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({
+      action:'submitVote', month:Number(voteConfig.month)||voteConfig.month, key:voteConfig.key,
+      city:cityVal, bggUser:document.getElementById('bgg-input').value.trim()||null,
+      hot1:sel.hot1?.name, hotId1:sel.hot1?.id,
+      hot2:sel.hot2?.name, hotId2:sel.hot2?.id,
+      hot3:sel.hot3?.name, hotId3:sel.hot3?.id,
+      fav1:sel.fav1?.name, favId1:sel.fav1?.id,
+      fav2:sel.fav2?.name, favId2:sel.fav2?.id,
+      fav3:sel.fav3?.name, favId3:sel.fav3?.id,
+      shame:sel.shame1?.name, shameId:sel.shame1?.id
+    })});
+    const data=await res.json();
+    if(data.success){
+      document.cookie=cookieKey+"=1; max-age="+(60*60*24*60)+"; path=/; SameSite=Strict";
+      showStep('step-success'); applyTexts();
+    }else{
+      alert(data.error||'Error'); btn.disabled=false; document.getElementById('submit-txt').textContent=t('submit');
+    }
+  }catch(e){
+    alert('Error de conexión. Inténtalo de nuevo.'); btn.disabled=false; document.getElementById('submit-txt').textContent=t('submit');
+  }
 }
 
-async function init() {
+document.getElementById('submit-btn').addEventListener('click',submitVote);
+
+// ============================================================
+// INIT — validate key with server, load config
+// ============================================================
+async function init(){
+  applyTexts();
+  loadGamesCache(); // non-blocking
   const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
+  const monthParam = params.get('m');
+  const keyParam   = params.get('key');
 
-  // Check voting status
-  try {
-    const res = await fetch(API_URL + '?action=status');
-    const status = await res.json();
+  if(!monthParam && !keyParam){ showStep('step-nokey'); applyTexts(); return; }
 
-    document.getElementById('month-badge').textContent = status.currentMonth;
-
-    if (token) {
-      // Verify token
-      const vRes = await fetch(API_URL + '?action=verifyToken&token=' + token);
-      const vData = await vRes.json();
-      if (vData.valid) {
-        currentToken = token;
-        if (!status.votingOpen) { showStep('step-closed'); return; }
-        showStep('step-vote');
-        ['hot1','hot2','hot3','fav1','fav2','fav3','shame'].forEach(k => {
-          createAutocomplete(k+'-wrap', k);
-        });
-      } else {
-        showStep('step-email');
-        showMsg('email-msg', t('invalid_token'), 'error');
-      }
+  try{
+    let data;
+    if(monthParam){
+      // Short URL: look up the active key for this month
+      const res = await fetch(API_URL+'?action=getKeyByMonth&m='+encodeURIComponent(monthParam));
+      data = await res.json();
     } else {
-      if (!status.votingOpen) { showStep('step-closed'); return; }
-      showStep('step-email');
+      // Full key URL (fallback / admin use)
+      const res = await fetch(API_URL+'?action=validateKey&key='+encodeURIComponent(keyParam));
+      data = await res.json();
+      if(data.valid) data.key = keyParam;
     }
-  } catch(e) {
-    showStep('step-email');
+
+    if(!data.valid){
+      showStep(data.reason==='expired' ? 'step-closed' : 'step-nokey');
+      applyTexts(); return;
+    }
+
+    voteConfig = { ...data };
+    document.getElementById('month-label').textContent = lang==='es' ? data.monthLabelEs : data.monthLabelEn;
+
+    if(document.cookie.includes('voted_'+data.month)){
+      showStep('step-success'); applyTexts(); return;
+    }
+
+    showStep('step-vote');
+    ['hot1','hot2','hot3','fav1','fav2','fav3','shame1'].forEach(k=>makeAC(k,k));
+    applyTexts();
+
+  }catch(e){
+    showStep('step-nokey'); applyTexts();
   }
 }
 
