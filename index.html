@@ -62,6 +62,8 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 .rrow.r2 .rnum,.rrow.r3 .rnum { color:var(--text2); }
 .rinfo { padding:12px 14px; }
 .rname { font-size:14px; font-weight:400; color:var(--text); }
+.bgg-link { font-size:10px; color:var(--gold); text-decoration:none; opacity:0.7; margin-top:2px; display:inline-block; }
+.bgg-link:hover { opacity:1; }
 .rid { font-size:10px; color:var(--text3); margin-top:2px; }
 .rscore { padding:12px 14px 12px 0; }
 .sbar-wrap { display:flex; align-items:center; gap:8px; }
@@ -250,7 +252,12 @@ function renderRanking(items,color){
     const r=i+1,pct=Math.round(it.score/max*100);
     return `<div class="rrow${r<=3?' r'+r:''}">
       <div class="rnum">${r}</div>
-      <div class="rinfo"><div class="rname">${it.name}</div>${it.id?`<div class="rid">BGG #${it.id}</div>`:''}</div>
+      <div class="rinfo">
+        <div class="rname">${it.name}</div>
+        <a class="bgg-link" href="${it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`}" target="_blank" rel="noopener">
+          ${it.id ? `BGG #${it.id}` : `Buscar en BGG`}
+        </a>
+      </div>
       <div class="rscore"><div class="sbar-wrap"><div class="sbar"><div class="sbar-fill" style="width:${pct}%;background:${color}"></div></div><div class="sval">${it.score.toFixed(2)}</div></div></div>
       <div class="rmove">${moveHtml(it.move)}</div>
     </div>`;
@@ -263,7 +270,12 @@ function renderHall(hall){
   return `<div class="hall">${hall.map((it,i)=>`
     <div class="hrow">
       <div class="hrank">${nums[i]||i+1}</div>
-      <div class="hname">${it.name}</div>
+      <div>
+        <div class="hname">${it.name}</div>
+        <a class="bgg-link" href="${it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`}" target="_blank" rel="noopener">
+          ${it.id ? `BGG #${it.id}` : `Buscar en BGG`}
+        </a>
+      </div>
       <div class="hmonths">${tr('hall_months',it.totalMonths)}</div>
       <div class="hbadge">inducted</div>
     </div>`).join('')}</div>`;
