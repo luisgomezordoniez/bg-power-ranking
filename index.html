@@ -97,6 +97,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
   .tab { padding:8px 12px; font-size:12px; }
 }
 </style>
+  <script src="config.js"></script>
 </head>
 <body>
 
@@ -144,8 +145,7 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwn106lQFmDgLnFJh0cuzzuf4s1TKIJLvU1qTrhTGz1u5_Er_IcnpFc-it_k9Is4s2b/exec"; // Replace with your deployed Apps Script URL
-const MIN_CITY_VOTERS = 10;
+const MIN_CITY_VOTERS = 3;
 
 let lang="es", monthIdx=0, allMonths=[];
 

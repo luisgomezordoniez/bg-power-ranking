@@ -105,6 +105,7 @@ h1 em { font-style:italic; color:var(--gold); }
   .stat-row { grid-template-columns:1fr 1fr; }
 }
 </style>
+  <script src="config.js"></script>
 </head>
 <body>
 <div class="page">
@@ -215,7 +216,6 @@ h1 em { font-style:italic; color:var(--gold); }
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwn106lQFmDgLnFJh0cuzzuf4s1TKIJLvU1qTrhTGz1u5_Er_IcnpFc-it_k9Is4s2b/exec"; // Replace with your deployed Apps Script URL
 let adminPwd="", cityMerges={};
 
 async function api(body){

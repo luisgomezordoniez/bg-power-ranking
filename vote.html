@@ -68,6 +68,14 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 .ac-input { width:100%; padding:9px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:'Outfit',sans-serif; font-weight:300; color:var(--text); outline:none; transition:border-color 0.2s; }
 .ac-input:focus { border-color:var(--gold); }
 .ac-input.has-value { border-color:rgba(58,122,80,0.6); background:rgba(58,122,80,0.06); }
+.selected-game { display:flex; align-items:center; gap:10px; padding:8px 10px; background:rgba(58,122,80,0.06); border:1px solid rgba(58,122,80,0.4); border-radius:8px; }
+.selected-thumb { width:40px; height:40px; border-radius:6px; object-fit:cover; background:var(--bg3); flex-shrink:0; border:1px solid var(--border); }
+.selected-thumb-placeholder { width:40px; height:40px; border-radius:6px; background:var(--bg3); border:1px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.selected-info { flex:1; min-width:0; }
+.selected-name { font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.selected-year { font-size:11px; color:var(--text3); margin-top:2px; }
+.selected-clear { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:0 4px; line-height:1; flex-shrink:0; }
+.selected-clear:hover { color:var(--red); }
 .ac-input::placeholder { color:var(--text3); }
 .dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg2); border:1px solid var(--border2); border-radius:8px; z-index:999; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.5); }
 .dd-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s; display:flex; justify-content:space-between; align-items:center; }
@@ -101,7 +109,22 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 .step { display:none; }
 .step.active { display:block; animation:fadeIn 0.3s ease; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.plays-btn { margin-top:10px; padding:7px 14px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--gold); font-size:12px; font-family:"Outfit",sans-serif; cursor:pointer; transition:all 0.2s; letter-spacing:0.03em; width:100%; }
+.plays-btn:hover:not(:disabled) { background:rgba(212,168,67,0.08); }
+.plays-btn:disabled { opacity:0.35; cursor:not-allowed; }
+.plays-panel { margin-top:10px; border:1px solid var(--border); border-radius:8px; overflow:hidden; animation:fadeIn 0.25s ease; }
+.plays-panel-header { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; padding:8px 12px; background:var(--bg3); border-bottom:1px solid var(--border); }
+.plays-list { display:flex; flex-direction:column; }
+.plays-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid var(--border); transition:background 0.1s; }
+.plays-item:last-child { border-bottom:none; }
+.plays-item-name { font-size:13px; color:var(--text); flex:1; }
+.plays-item-count { font-size:11px; color:var(--text3); white-space:nowrap; }
+
+.plays-empty { padding:12px; font-size:12px; color:var(--text3); text-align:center; }
+.plays-error { padding:12px; font-size:12px; color:var(--red); text-align:center; }
 </style>
+  <script src="config.js"></script>
 </head>
 <body>
 <div class="page">
@@ -157,6 +180,10 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
           <div class="bgg-hint"><a href="https://boardgamegeek.com" target="_blank">boardgamegeek.com</a></div>
         </div>
       </div>
+      <button class="plays-btn" id="load-plays-btn" disabled onclick="loadPlays()">
+        <span id="load-plays-txt">Cargar mis partidas del mes · Load my plays</span>
+      </button>
+      <div id="plays-panel" style="display:none"></div>
     </div>
 
     <div class="section hot">
@@ -208,12 +235,36 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
 
 </div>
 <script>
-const API_URL    = "https://script.google.com/macros/s/AKfycbwn106lQFmDgLnFJh0cuzzuf4s1TKIJLvU1qTrhTGz1u5_Er_IcnpFc-it_k9Is4s2b/exec";
 // BGG proxy options — tries each in order if previous fails
 const BGG_PROXIES = [
   "https://corsproxy.io/?",
   "https://api.allorigins.win/raw?url=",
 ];
+
+// Local game cache — loaded once on init
+let gamesCache = [];
+async function loadGamesCache(){
+  try{
+    const res = await fetch('games-cache.json');
+    gamesCache = await res.json();
+  }catch(e){ gamesCache = []; }
+}
+
+// Search cache locally
+function searchCache(q){
+  const ql = q.toLowerCase();
+  return gamesCache
+    .filter(g => g.name.toLowerCase().includes(ql))
+    .sort((a,b) => {
+      // Exact start match ranked higher
+      const as = a.name.toLowerCase().startsWith(ql);
+      const bs = b.name.toLowerCase().startsWith(ql);
+      if(as && !bs) return -1;
+      if(!as && bs) return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 8);
+}
 const BGG_SEARCH = "https://boardgamegeek.com/xmlapi2/search?type=boardgame&query=";
 
 let lang = "es";
@@ -305,13 +356,83 @@ document.getElementById('city-input').addEventListener('blur',function(){
   if(!this.value.trim()){ this.classList.add('error'); document.getElementById('city-error').classList.add('show'); }
 });
 
+// Enable load plays button when BGG username is typed
+document.getElementById('bgg-input').addEventListener('input',function(){
+  const btn = document.getElementById('load-plays-btn');
+  btn.disabled = this.value.trim().length < 2;
+  // Reset plays panel if username changes
+  document.getElementById('plays-panel').style.display='none';
+});
+
+async function loadPlays(){
+  const username = document.getElementById('bgg-input').value.trim();
+  if(!username) return;
+
+  const btn = document.getElementById('load-plays-btn');
+  const panel = document.getElementById('plays-panel');
+  const txt = document.getElementById('load-plays-txt');
+
+  btn.disabled = true;
+  txt.textContent = lang==='es' ? 'Cargando...' : 'Loading...';
+  panel.style.display = 'none';
+
+  try {
+    const res = await fetch(API_URL+'?action=getPlays&username='+encodeURIComponent(username)+'&month='+encodeURIComponent(voteConfig.month));
+    const data = await res.json();
+
+    if(data.error){
+      panel.innerHTML = `<div class="plays-panel"><div class="plays-error">${data.error}</div></div>`;
+      panel.style.display = 'block';
+    } else if(!data.plays || data.plays.length === 0){
+      const msg = lang==='es'
+        ? 'No se encontraron partidas registradas este mes en BGG.'
+        : 'No logged plays found for this month on BGG.';
+      panel.innerHTML = `<div class="plays-panel"><div class="plays-empty">${msg}</div></div>`;
+      panel.style.display = 'block';
+    } else {
+      renderPlaysPanel(data.plays);
+    }
+  } catch(e) {
+    const msg = lang==='es' ? 'Error al conectar con BGG.' : 'Could not connect to BGG.';
+    panel.innerHTML = `<div class="plays-panel"><div class="plays-error">${msg}</div></div>`;
+    panel.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  txt.textContent = lang==='es' ? 'Cargar mis partidas del mes · Load my plays' : 'Cargar mis partidas del mes · Load my plays';
+}
+
+function renderPlaysPanel(plays){
+  const panel = document.getElementById('plays-panel');
+  const header = lang==='es'
+    ? 'Partidas registradas este mes en BGG'
+    : 'Your logged plays this month on BGG';
+
+  const rows = plays.map(p => {
+    const countTxt = p.plays === 1
+      ? (lang==='es' ? '1 partida' : '1 play')
+      : `${p.plays} ${lang==='es' ? 'partidas' : 'plays'}`;
+    return `<div class="plays-item">
+      <span class="plays-item-name">${p.name}</span>
+      <span class="plays-item-count">${countTxt}</span>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = `<div class="plays-panel">
+    <div class="plays-panel-header">${header}</div>
+    <div class="plays-list">${rows}</div>
+  </div>`;
+  panel.style.display = 'block';
+}
+
 // BGG Autocomplete
 function makeAC(containerId,key){
   const wrap=document.getElementById(containerId);
   const input=document.createElement('input');
   input.className='ac-input'; input.placeholder=t('placeholder'); input.autocomplete='off';
   const dd=document.createElement('div'); dd.className='dropdown'; dd.style.display='none';
-  wrap.appendChild(input); wrap.appendChild(dd);
+  const selectedDiv=document.createElement('div'); selectedDiv.className='selected-game'; selectedDiv.style.display='none';
+  wrap.appendChild(input); wrap.appendChild(dd); wrap.appendChild(selectedDiv);
   let timer,focusIdx=-1;
   input.addEventListener('input',()=>{
     if(sel[key]){ sel[key]=null; input.classList.remove('has-value'); updateProgress(); }
@@ -354,7 +475,23 @@ function hilite(items,idx){ items.forEach((it,i)=>it.classList.toggle('hi',i===i
 async function doSearch(q,dd,input,key){
   const ck=q.toLowerCase();
   if(cache[ck]){ renderDD(cache[ck],dd,input,key); return; }
+
+  // 1. Check local cache instantly
+  const cached = searchCache(q);
+  if(cached.length){
+    renderDD(cached,dd,input,key);
+    // Also try BGG in background to enrich results
+    tryBGG(q,dd,input,key);
+    return;
+  }
+
+  // 2. No local results — hit BGG
   dd.innerHTML=`<div class="dd-loading">${t('searching')}</div>`; dd.style.display='block';
+  await tryBGG(q,dd,input,key);
+}
+
+async function tryBGG(q,dd,input,key){
+  const ck=q.toLowerCase();
   let items=null;
   for(const proxy of BGG_PROXIES){
     try{
@@ -370,14 +507,14 @@ async function doSearch(q,dd,input,key){
     }catch(e){ continue; }
   }
   if(items&&items.length){
-    cache[ck]=items; renderDD(items,dd,input,key);
-  } else {
-    // BGG unreachable — show manual entry option
+    cache[ck]=items;
+    // Only re-render if input still has the same query
+    if(input.value.trim().toLowerCase()===ck) renderDD(items,dd,input,key);
+  } else if(dd.style.display==='block'&&!dd.querySelector('.dd-item:not(.dd-manual)')){
+    // BGG failed and no results showing — show manual entry
     dd.innerHTML=`<div class="dd-item dd-manual"><span class="dd-name">${q}</span><span class="dd-year">${t('manual_entry')}</span></div>`;
     dd.style.display='block';
-    dd.querySelector('.dd-manual').addEventListener('click',()=>{
-      pick({id:null,name:q,year:''},input,dd,key);
-    });
+    dd.querySelector('.dd-manual').addEventListener('click',()=>pick({id:null,name:q,year:''},input,dd,key));
   }
 }
 
@@ -398,7 +535,74 @@ function renderDD(items,dd,input,key){
 }
 
 function pick(game,input,dd,key){
-  sel[key]=game; input.value=game.name; input.classList.add('has-value'); dd.style.display='none'; updateProgress();
+  sel[key]=game; dd.style.display='none';
+  // Show selected card, hide input
+  const wrap=input.parentElement;
+  const selectedDiv=wrap.querySelector('.selected-game');
+  input.style.display='none';
+  selectedDiv.style.display='flex';
+  selectedDiv.innerHTML=`
+    <div class="selected-thumb-placeholder" id="thumb-${key}">🎲</div>
+    <div class="selected-info">
+      <div class="selected-name">${game.name}</div>
+      <div class="selected-year">${game.year||''}</div>
+    </div>
+    <button class="selected-clear" onclick="clearPick('${key}')" title="Clear">×</button>`;
+  // Fetch thumbnail if we have a BGG ID
+  if(game.id) fetchThumb(game.id, key);
+  updateProgress();
+}
+
+function clearPick(key){
+  sel[key]=null;
+  const wrap=document.getElementById(key);
+  const input=wrap.querySelector('.ac-input');
+  const selectedDiv=wrap.querySelector('.selected-game');
+  input.value='';
+  input.style.display='';
+  selectedDiv.style.display='none';
+  selectedDiv.innerHTML='';
+  updateProgress();
+}
+
+const thumbCache={};
+async function fetchThumb(bggId, key){
+  // Check cache first
+  if(thumbCache[bggId]){
+    setThumb(key, thumbCache[bggId]); return;
+  }
+  try{
+    // Use BGG thumbnail from cache file if available
+    const cached=gamesCache.find(g=>g.id===bggId);
+    if(cached&&cached.thumb){
+      thumbCache[bggId]=cached.thumb;
+      setThumb(key, cached.thumb); return;
+    }
+    // Fetch from BGG via proxy
+    const proxy='https://corsproxy.io/?';
+    const url=proxy+encodeURIComponent(`https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&type=boardgame`);
+    const res=await fetch(url,{signal:AbortSignal.timeout(6000)});
+    const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+    const thumb=xml.querySelector('thumbnail')?.textContent?.trim();
+    if(thumb){
+      thumbCache[bggId]=thumb;
+      setThumb(key, thumb);
+      // Also store in games cache for this session
+      const entry=gamesCache.find(g=>g.id===bggId);
+      if(entry) entry.thumb=thumb;
+    }
+  }catch(e){ /* silent fail — placeholder stays */ }
+}
+
+function setThumb(key, url){
+  const placeholder=document.getElementById('thumb-'+key);
+  if(!placeholder) return;
+  const img=document.createElement('img');
+  img.className='selected-thumb';
+  img.src=url;
+  img.alt='';
+  img.onerror=()=>{}; // keep placeholder on error
+  placeholder.replaceWith(img);
 }
 
 function showStep(id){
@@ -422,7 +626,7 @@ async function submitVote(){
   }
   try{
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({
-      action:'submitVote', month:voteConfig.month, key:voteConfig.key,
+      action:'submitVote', month:Number(voteConfig.month)||voteConfig.month, key:voteConfig.key,
       city:cityVal, bggUser:document.getElementById('bgg-input').value.trim()||null,
       hot1:sel.hot1?.name, hotId1:sel.hot1?.id,
       hot2:sel.hot2?.name, hotId2:sel.hot2?.id,
@@ -451,6 +655,7 @@ document.getElementById('submit-btn').addEventListener('click',submitVote);
 // ============================================================
 async function init(){
   applyTexts();
+  loadGamesCache(); // non-blocking
   const params = new URLSearchParams(window.location.search);
   const monthParam = params.get('m');
   const keyParam   = params.get('key');
