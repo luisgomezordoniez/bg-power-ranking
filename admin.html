@@ -240,9 +240,12 @@ async function loadStatus(){
     fetch(API_URL+'?action=status').then(r=>r.json())
   ]);
   document.getElementById('stat-month').textContent=status.currentMonth||'—';
-  document.getElementById('month-input').value=status.currentMonth||'';
-  const open=status.votingOpen;
-  document.getElementById('stat-status').innerHTML=`<div class="status-pill ${open?'pill-open':'pill-closed'}"><div class="dot ${open?'dot-open':'dot-closed'}"></div>${open?'Open':'Closed'}</div>`;
+  // Pre-fill the generate form with current month as convenience
+  const genMonth=document.getElementById('gen-month');
+  if(genMonth&&!genMonth.value) genMonth.value=status.currentMonth||'';
+  const keys=status.activeKeys||[];
+  const open=keys.length>0;
+  document.getElementById('stat-status').innerHTML=`<div class="status-pill ${open?'pill-open':'pill-closed'}"><div class="dot ${open?'dot-open':'dot-closed'}"></div>${open?keys.length+' active link'+(keys.length!==1?'s':''):'No active links'}</div>`;
   if(!votes.error){
     document.getElementById('stat-votes').textContent=votes.total||0;
     const cities=votes.votes?[...new Set(votes.votes.map(v=>v.city).filter(Boolean))].length:0;
