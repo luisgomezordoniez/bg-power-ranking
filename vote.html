@@ -171,7 +171,18 @@ body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif;
       <div class="fields-row">
         <div class="field">
           <label><span class="required-dot"></span><span id="city-label">Ciudad</span></label>
-          <input type="text" id="city-input" placeholder="Madrid, Buenos Aires..." autocomplete="off">
+          <input type="text" id="city-input" placeholder="..." autocomplete="off" list="cities-list">
+          <datalist id="cities-list">
+            <option value="Puebla">
+            <option value="Toluca">
+            <option value="CDMX">
+            <option value="Ciudad de México">
+            <option value="Guadalajara">
+            <option value="Monterrey">
+            <option value="Querétaro">
+            <option value="Playa del Carmen">
+            <option value="Mérida">  
+          </datalist>
           <div class="error-msg" id="city-error">Indica tu ciudad para continuar</div>
         </div>
         <div class="field">
