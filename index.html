@@ -266,6 +266,7 @@ function getThumb(id){
 }
 
 const PREVIEW_N = 10;
+const rankingStore = {}; // store full items by key, avoids DOM encoding issues
 
 function renderRows(items, color){
   const max = items[0].score;
@@ -292,31 +293,28 @@ function renderRows(items, color){
   }).join('');
 }
 
-function renderRanking(items, color, expanded=false){
+function renderRanking(items, color, storeKey, expanded=false){
   if(!items||!items.length) return `<div class="empty">${tr('empty')}</div>`;
+  rankingStore[storeKey] = { items, color }; // safe storage, no DOM encoding
   const visible  = expanded ? items : items.slice(0, PREVIEW_N);
   const hasMore  = items.length > PREVIEW_N;
   const btnLabel = expanded
     ? (lang==='es' ? '▲ Ver menos' : '▲ Show less')
     : `▼ ${lang==='es' ? 'Ver todos' : 'Show all'} (${items.length})`;
   const toggleBtn = hasMore
-    ? `<button class="show-all-btn" onclick="toggleRanking(this,'${color}')">${btnLabel}</button>`
+    ? `<button class="show-all-btn" onclick="toggleRanking('${storeKey}')">${btnLabel}</button>`
     : '';
-  return `<div class="ranking" data-all='${JSON.stringify(items)}' data-color="${color}" data-expanded="${expanded}">${renderRows(visible,color)}</div>${toggleBtn}`;
+  return `<div class="ranking" id="ranking-${storeKey}">${renderRows(visible,color)}</div>${toggleBtn}`;
 }
 
-function toggleRanking(btn, color){
-  const ranking  = btn.previousElementSibling;
-  const items    = JSON.parse(ranking.dataset.all);
-  const expanded = ranking.dataset.expanded === 'true';
-  btn.previousElementSibling.outerHTML;
-  const newHtml  = renderRanking(items, color, !expanded);
-  const wrapper  = btn.parentElement;
-  // Replace just the ranking div and button
-  const tmp = document.createElement('div');
-  tmp.innerHTML = newHtml;
-  wrapper.replaceChild(tmp.firstChild, ranking);
-  wrapper.replaceChild(tmp.firstChild, btn);
+function toggleRanking(storeKey){
+  const store    = rankingStore[storeKey];
+  if(!store) return;
+  const el       = document.getElementById('ranking-'+storeKey);
+  const expanded = el.querySelectorAll('.rrow').length === store.items.length;
+  const newHtml  = renderRanking(store.items, store.color, storeKey, !expanded);
+  const parent   = el.parentElement;
+  parent.innerHTML = newHtml;
 }
 
 function renderHall(hall){
@@ -354,9 +352,9 @@ function renderAll(){
     return;
   }
   document.getElementById('voter-chip').textContent=tr('voters',fd.total);
-  document.getElementById('panel0').innerHTML=renderRanking(fd.hotness,'#c04030');
-  document.getElementById('panel1').innerHTML=renderRanking(fd.favorites,'#3a7a50');
-  document.getElementById('panel2').innerHTML=renderRanking(fd.shame,'#5a5448');
+  document.getElementById('panel0').innerHTML=renderRanking(fd.hotness,'#c04030','hot');
+  document.getElementById('panel1').innerHTML=renderRanking(fd.favorites,'#3a7a50','fav');
+  document.getElementById('panel2').innerHTML=renderRanking(fd.shame,'#5a5448','shame');
   document.getElementById('panel3').innerHTML=renderHall(d.hall);
 }
 
