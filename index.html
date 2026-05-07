@@ -273,7 +273,8 @@ function renderRanking(items,color){
       ? `<img class="rthumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
       : `<div class="rthumb-placeholder"></div>`;
     const bggHref=it.id ? `https://boardgamegeek.com/boardgame/${it.id}` : `https://boardgamegeek.com/search?q=${encodeURIComponent(it.name)}&exact=1`;
-    return `<div class="rrow${r<=3?' r'+r:''}">
+    const isTop = it.score === items[0].score;
+    return `<div class="rrow${isTop?' r1':''}">
       <div class="rnum">${r}</div>
       <div class="rinfo">
         ${thumbHtml}
