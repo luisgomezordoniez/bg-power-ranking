@@ -371,7 +371,7 @@ async function publish(){
   showMsg('calc-msg','Publishing...','info');
   const data=await api({action:'publish',password:adminPwd});
   if(data.error){ showMsg('calc-msg',data.error,'error'); return; }
-  showMsg('calc-msg',`Rankings for ${data.published.month} are now live.`,'success');
+  showMsg('calc-msg',`Rankings for ${data.month||data.published?.month} are now live.`,'success');
   document.getElementById('publish-btn').disabled=true;
   document.getElementById('preview-container').innerHTML='';
 }
