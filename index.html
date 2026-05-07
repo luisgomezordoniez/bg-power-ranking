@@ -102,6 +102,8 @@ nav { display:flex; align-items:center; justify-content:space-between; padding:1
   .rname { font-size:13px; }
   .tab { padding:8px 12px; font-size:12px; }
 }
+.show-all-btn { width:100%; margin-top:6px; padding:10px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--gold); font-size:12px; font-family:'Outfit',sans-serif; cursor:pointer; letter-spacing:0.05em; transition:all 0.2s; }
+.show-all-btn:hover { background:rgba(212,168,67,0.08); }
 .bgg-footer { text-align:center; padding:2rem 0 1.5rem; opacity:0.6; transition:opacity 0.2s; }
 .bgg-footer:hover { opacity:1; }
 .bgg-footer img { max-width:120px; display:inline-block; }
@@ -263,11 +265,12 @@ function getThumb(id){
   return g&&g.thumb ? g.thumb : '';
 }
 
-function renderRanking(items,color){
-  if(!items||!items.length) return `<div class="empty">${tr('empty')}</div>`;
-  const max=items[0].score;
-  return `<div class="ranking">${items.map((it,i)=>{
-    const r=i+1,pct=Math.round(it.score/max*100);
+const PREVIEW_N = 10;
+
+function renderRows(items, color){
+  const max = items[0].score;
+  return items.map((it,i) => {
+    const r=i+1, pct=Math.round(it.score/max*100);
     const thumb=getThumb(it.id);
     const thumbHtml=thumb
       ? `<img class="rthumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
@@ -286,7 +289,34 @@ function renderRanking(items,color){
       <div class="rscore"><div class="sbar-wrap"><div class="sbar"><div class="sbar-fill" style="width:${pct}%;background:${color}"></div></div><div class="sval">${it.score.toFixed(2)}</div></div></div>
       <div class="rmove">${moveHtml(it.move)}</div>
     </div>`;
-  }).join('')}</div>`;
+  }).join('');
+}
+
+function renderRanking(items, color, expanded=false){
+  if(!items||!items.length) return `<div class="empty">${tr('empty')}</div>`;
+  const visible  = expanded ? items : items.slice(0, PREVIEW_N);
+  const hasMore  = items.length > PREVIEW_N;
+  const btnLabel = expanded
+    ? (lang==='es' ? '▲ Ver menos' : '▲ Show less')
+    : `▼ ${lang==='es' ? 'Ver todos' : 'Show all'} (${items.length})`;
+  const toggleBtn = hasMore
+    ? `<button class="show-all-btn" onclick="toggleRanking(this,'${color}')">${btnLabel}</button>`
+    : '';
+  return `<div class="ranking" data-all='${JSON.stringify(items)}' data-color="${color}" data-expanded="${expanded}">${renderRows(visible,color)}</div>${toggleBtn}`;
+}
+
+function toggleRanking(btn, color){
+  const ranking  = btn.previousElementSibling;
+  const items    = JSON.parse(ranking.dataset.all);
+  const expanded = ranking.dataset.expanded === 'true';
+  btn.previousElementSibling.outerHTML;
+  const newHtml  = renderRanking(items, color, !expanded);
+  const wrapper  = btn.parentElement;
+  // Replace just the ranking div and button
+  const tmp = document.createElement('div');
+  tmp.innerHTML = newHtml;
+  wrapper.replaceChild(tmp.firstChild, ranking);
+  wrapper.replaceChild(tmp.firstChild, btn);
 }
 
 function renderHall(hall){
